@@ -1,4 +1,4 @@
-package com.study.signalproxy.config;
+package com.study.signalworker.config;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;

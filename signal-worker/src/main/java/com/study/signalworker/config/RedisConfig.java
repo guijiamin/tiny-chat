@@ -1,19 +1,16 @@
-package com.study.signalproxy.config;
+package com.study.signalworker.config;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.env.MapPropertySource;
-import org.springframework.data.redis.connection.RedisClusterConfiguration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import redis.clients.jedis.JedisPoolConfig;
 
 import javax.annotation.Resource;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Decription
@@ -25,28 +22,37 @@ import java.util.Map;
  */
 @Slf4j
 @Configuration
-@ConditionalOnProperty(name = "redis.cluster.enable", havingValue = "true")
-public class RedisClusterConfig {
+@ConditionalOnProperty(name = "redis.cluster.enable", havingValue = "false")
+public class RedisConfig {
     @Resource
     private RedisProperties redisProperties;
 
-    @Bean
+    @Bean(name = "rd")
     public RedisTemplate<String, String> getRedisTemplate() {
-        log.info("Init cluster redistemplate, nodes: {}, timeout: {}...", redisProperties.getNodes(), redisProperties.getTimeout());
+        log.info("Init redistemplate, host: {}, port: {}, database: {}...", redisProperties.getHost(), redisProperties.getPort(), redisProperties.getDatabase());
         StringRedisTemplate stringRedisTemplate = new StringRedisTemplate(getRedisConnectionFactory());
         stringRedisTemplate.opsForValue().set("test", "test");
         System.out.println("test=" + stringRedisTemplate.opsForValue().get("test"));
-        log.info("Init cluster redistemplate success...");
+        log.info("Init redistemplate success...");
         return stringRedisTemplate;
     }
 
     @Bean
     public RedisConnectionFactory getRedisConnectionFactory() {
-        Map<String, Object> source = new HashMap<>();
-        source.put("spring.redis.cluster.nodes", redisProperties.getNodes());
-        source.put("spring.redis.cluster.timeout", redisProperties.getTimeout());
+        JedisConnectionFactory connectionFactory = new JedisConnectionFactory();
+        connectionFactory.setHostName(redisProperties.getHost());
+        connectionFactory.setPort(redisProperties.getPort());
+        connectionFactory.setDatabase(redisProperties.getDatabase());
+        connectionFactory.setPoolConfig(getPoolConfig());//设置池配置
+        return connectionFactory;
+    }
 
-        RedisClusterConfiguration redisClusterConfiguration = new RedisClusterConfiguration(new MapPropertySource("RedisClusterConfiguration", source));
-        return new JedisConnectionFactory(redisClusterConfiguration);
+    private JedisPoolConfig getPoolConfig() {
+        JedisPoolConfig poolConfig = new JedisPoolConfig();
+        poolConfig.setMaxIdle(200);
+        poolConfig.setMaxTotal(1024);
+        poolConfig.setMaxWaitMillis(10000);
+        poolConfig.setTestOnBorrow(true);
+        return poolConfig;
     }
 }

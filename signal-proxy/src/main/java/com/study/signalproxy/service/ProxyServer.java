@@ -7,11 +7,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.java_websocket.WebSocket;
 import org.java_websocket.handshake.ClientHandshake;
 import org.java_websocket.server.WebSocketServer;
-import org.springframework.context.ApplicationContext;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.stereotype.Component;
 
-import javax.annotation.Resource;
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -27,13 +24,6 @@ import java.util.concurrent.TimeUnit;
  */
 @Slf4j
 public class ProxyServer extends WebSocketServer {
-
-    private RedisTemplate redisTemplate;
-
-    public void setRedisTemplate(RedisTemplate redisTemplate) {
-        this.redisTemplate = redisTemplate;
-    }
-
     private Map<String, HashMap<String, WebSocket>> onlineMap = new ConcurrentHashMap<>();
     private TimeWheel<String, WebSocket> timeWheel;
 
@@ -227,7 +217,7 @@ public class ProxyServer extends WebSocketServer {
         }
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         String host = "localhost";
         int port = 8887;
 
