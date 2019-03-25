@@ -1,5 +1,5 @@
 # tiny-chat
-![ad](https://github.com/guijiamin/tiny-chat/blob/master/structure.png)
+![ad](https://github.com/guijiamin/tiny-chat/blob/master/sys.png)
 
 ### 1、chat-room
 > web聊天平台
