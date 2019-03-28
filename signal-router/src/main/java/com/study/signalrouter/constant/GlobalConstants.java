@@ -1,10 +1,10 @@
-package com.study.signalproxy.constant;
+package com.study.signalrouter.constant;
 
 /**
  * Decription
  * <p>
  * </p>
- * DATE 19/3/4.
+ * DATE 2019/3/22.
  *
  * @author guijiamin.
  */
@@ -31,6 +31,5 @@ public class GlobalConstants {
         public static final String SMILE = "|^_^|";
     }
 
-    public static final String MSG_KEEPALIVE = "rid_heartbeat" + SYMBOL.SMILE + "uid_heartbeat" + SYMBOL.SMILE + "{\"msgid\":\"15\"}";
+    public static final String MSG_KEEPALIVE = "rid_heartbeat" + SYMBOL.SMILE + "uid_heartbeat" + SYMBOL.SMILE + "{\"msgid\":\"200\"}";
 }
-

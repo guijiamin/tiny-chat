@@ -12,7 +12,7 @@
 	<artifactId>signal-proxy</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>signal-proxy</name>
-	<description>Sinal proxy for Spring Boot</description>
+	<description>SinalProxy for Spring Boot</description>
 
 	<properties>
 		<java.version>1.8</java.version>
@@ -22,6 +22,10 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-redis</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.projectlombok</groupId>
@@ -104,7 +108,7 @@
 								<commandLineArgument>prod</commandLineArgument>
 							</commandLineArguments>
 							<!-- 生成的脚本文件的名称，比如start.sh,你也可以根据你的需要命名成其他名字 -->
-							<name>proxy</name>
+							<name>SocketClient</name>
 						</program>
 					</programs>
 				</configuration>

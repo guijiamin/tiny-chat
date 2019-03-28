@@ -26,3 +26,7 @@
 https://github.com/TooTallNate/Java-WebSocket
 ##### 5.2 tcp-socket
 https://github.com/jzj1993/JavaTcpSocket
+##### 5.3 emoji
+https://github.com/joaoeudes7/V-Emoji-Picker
+##### 5.4 vue-chat
+https://github.com/coffcer/vue-chat
