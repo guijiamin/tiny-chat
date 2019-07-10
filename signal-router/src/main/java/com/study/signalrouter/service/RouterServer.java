@@ -1,16 +1,10 @@
 package com.study.signalrouter.service;
 
 import com.study.signalrouter.service.TimeWheel;
+import com.study.signalrouter.service.socket.SocketTransceiver;
 import com.study.signalrouter.service.socket.TcpServer;
 
 import java.io.*;
-import java.net.InetSocketAddress;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.net.SocketAddress;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -57,13 +51,6 @@ public class RouterServer {
 //        timeWheel = new TimeWheel<>(1, 60, TimeUnit.SECONDS);
 //        timeWheel.start();
         //创建serversocket服务监听
-//        new TcpServer(5555).start();
-        FileInputStream fin = new FileInputStream("/Users/guijiamin/Downloads/check_web.sh");
-        byte[] bytes = new byte[1000];
-        int len = 0;
-        while ((len = fin.read()) != -1) {
-            System.out.println((char)len);
-            System.out.println("====================================" + len);
-        }
+        new TcpServer(5555).start();
     }
 }

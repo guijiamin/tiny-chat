@@ -2,7 +2,7 @@
 ![ad](https://github.com/guijiamin/tiny-chat/blob/master/sys.png)
 
 ### 1、chat-room
-> web聊天平台
+> 网页聊天平台
 
 ### 2、signal-proxy
 > 聊天服务接入层

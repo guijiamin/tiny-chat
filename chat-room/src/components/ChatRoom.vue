@@ -57,6 +57,7 @@ export default {
         if (data.msg.srcmsgid == '201') {
           this.$store.commit('ws_enter_room', JSON.parse(data.msg.data))
         }
+        this.keepAlive()
       } else if (data.msgid == '203') {
         let msgtype = data.msg.msgtype
         if (msgtype == '1') {//someone enter
@@ -85,6 +86,16 @@ export default {
     },
     sendMsg(val) {
       this.WS.send(val)
+    },
+    keepAlive() {
+      let msg = {
+        "msgid": "15",
+        "rid": this.self_user.rid,
+        "uid": this.self_user.uid,
+        "name": this.self_user.name,
+        "img": this.self_user.img
+      }
+      setInterval(() => {this.sendMsg(JSON.stringify(msg))}, 5000)
     }
   },
   computed: {

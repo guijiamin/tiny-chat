@@ -104,18 +104,16 @@ public abstract class SocketTransceiver implements Runnable {
                             this.send(GlobalConstants.MSG_KEEPALIVE);//回应给下游
                             break;
                         case GlobalConstants.MSG_ID.ENTERROOM://收到201进教室消息
-                            this.onUserEnterRoom(this.ip, headerRid, headerUid);//回调写入列表，并广播给当前房间其它用户
-                            //发送worker查询当前教室状态，完了回复给自己教室状态
-                            //TODO 发送给worker
-                            this.send("{\"msgid\":\"200\",\"msg\":{\"data\": \"worker reply\",\"srcmagid\":\"201\"}}");
+                            //TODO 以http发送给worker，收到回应后处理
+                            this.send("{\"msgid\":\"200\",\"msg\":{\"data\": \"收到proxy的进教室消息\",\"srcmagid\":\"201\"}}");//处理：回复给自己状态
+                            this.onUserEnterRoom(this.ip, headerRid, headerUid);//处理：回调房间列表广播给当前房间其它用户
                             break;
-                        case GlobalConstants.MSG_ID.UNICAST://收到202单播消息，发送给用户
-                            //TODO
+                        case GlobalConstants.MSG_ID.UNICAST://收到202单播消息
                             break;
                         case GlobalConstants.MSG_ID.BROADCAST://收到203广播消息，发送给router
-                            //TODO
-//                            JSONObject data = msgBody.getJSONObject("data");
-//                            String msgtype = data.getString("msgtype");
+                            //TODO 以http发送给worker，收到回应后处理
+                            this.send("{\"msgid\":\"200\",\"msg\":{\"data\": \"收到proxy的广播消息\",\"srcmagid\":\"203\"}}");//处理：回复确认消息给自己
+                            //处理：回调房间列表广播给当前房间其它用户
 
                             break;
                         default:

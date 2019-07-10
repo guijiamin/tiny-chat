@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
@@ -66,12 +67,17 @@ public class TcpClient {
             System.out.println("ReceiveMsgWatchDog is running...");
             while (TcpClient.this.runFlag) {
                 try {
-                    final String data = in.readUTF();
-                    //收到消息，扔到消息队列
-                    Router2ProxyEvent event = new Router2ProxyEvent(data);
-                    EventQueue.getInstance().produce(event);
+                    if (in != null) {
+                        final String data = in.readUTF();
+                        //收到消息，扔到消息队列
+                        Router2ProxyEvent event = new Router2ProxyEvent(data);
+                        EventQueue.getInstance().produce(event);
+                    }
+                } catch (EOFException e) {
+                    log.warn("EOFException");
                 } catch (IOException e) {
                     log.error("read input stream exception: {}", e.getMessage());
+                    e.printStackTrace();
                 }
             }
         }
@@ -82,8 +88,9 @@ public class TcpClient {
             System.out.println("KeepAliveWatchDog is running...");
             while (TcpClient.this.runFlag) {
                 try {
-                    Thread.sleep(10 * 1000);
+                    Thread.sleep(30 * 1000);
                     TcpClient.this.send(GlobalConstants.MSG_KEEPALIVE);
+//                    System.out.println("proxy发送心跳给router");
                 } catch (InterruptedException e) {
                     log.error("proxy send heartbeat to router exception: {}", e.getMessage());
                 }

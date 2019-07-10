@@ -44,15 +44,17 @@ public class TcpServer {
         } catch (IOException e) {
             this.runFlag = false;
         }
+        //服务启动后开启时间轮维护心跳包
         if (this.runFlag) {
             this.timeWheel = new TimeWheel<String, Socket>(1, 60, TimeUnit.SECONDS);
             this.timeWheel.addExpirationListener(new SocketExpirationListener<Socket>());
             this.timeWheel.start();
             System.out.println("tcp server timewheel is started");
         }
-        //阻塞模式获取客户端连接
+
         while (this.runFlag) {
             try {
+                //阻塞模式获取客户端连接
                 final Socket socket = server.accept();
                 //接收到客户端连接就创建一个客户端收发器
                 SocketTransceiver client = new SocketTransceiver(socket) {
@@ -62,7 +64,7 @@ public class TcpServer {
 
                             new HashSet<>(TcpServer.this.roomUser2proxy.get(rid).values()).forEach(ip -> {
                                 if (TcpServer.this.proxy2socket.containsKey(ip)) {
-                                    TcpServer.this.proxy2socket.get(ip).send("{\"msgid\":\"203\",\"rid\":\"jz123\",\"uid\":\"123\",\"alias\":\"lihua\",\"msg\":{\"msgtype\":\"1\",\"data\":{\"rid\":\"jz123\",\"uid\":\"123\",\"alias\":\"lihua\"}}}");
+                                    TcpServer.this.proxy2socket.get(ip).send("{\"msgid\":\"203\",\"rid\":\"jz123\",\"uid\":\"123\",\"name\":\"lihua\",\"msg\":{\"msgtype\":\"1\",\"data\":{\"rid\":\"jz123\",\"uid\":\"123\",\"name\":\"lihua\"}}}");
                                 }
                             });
 
@@ -81,7 +83,7 @@ public class TcpServer {
 
                     @Override
                     public void onProxyHeartBeat(String proxy) {
-                        timeWheel.add(proxy, socket);
+                        TcpServer.this.timeWheel.add(proxy, socket);
                     }
 
                     @Override
@@ -91,6 +93,8 @@ public class TcpServer {
                 };
                 //开启一个客户端线程
                 client.start();
+                //接收到客户端连接加入时间轮，当收到proxy的心跳包会激活时间轮
+                this.timeWheel.add(client.getIp(), socket);
                 //添加到客户端连接列表里
                 this.proxy2socket.put(client.getIp(), client);
             } catch (IOException e) {

@@ -38,7 +38,7 @@ public class ProxyServer extends WebSocketServer {
     private static Map<String, HashMap<String, WebSocket>> onlineMap = new ConcurrentHashMap<>();
     private TimeWheel<String, WebSocket> timeWheel;
     //TODO 第二版：接入中心转发层
-//    private TcpClient router;
+    private TcpClient router;
 
     public ProxyServer() {
         this(8787);
@@ -109,98 +109,98 @@ public class ProxyServer extends WebSocketServer {
         String uid = req.getString("uid");
         String name = req.getString("name");
         String img = req.getString("img");
-        //第一版：只有signal-proxy
-        JSONObject reqMsg = req.getJSONObject("msg");
-        if (msgid.equals(GlobalConstants.MSG_ID.ENTERROOM)) {
-            JSONObject val = new JSONObject() {{
-                put("rid", rid);
-                put("uid", uid);
-                put("name", name);
-                put("img", img);
-            }};
-            rd.opsForHash().put("USERS_" + rid, uid, val.toJSONString());
-            rd.expire(rid, 1, TimeUnit.DAYS);
-            //进教室消息：给自己回应当前教室列表，教室其它用户发送广播203-1
-            Map<Object, Object> roomInfo = rd.opsForHash().entries("USERS_" + rid);
-            List<String> messages = rd.opsForList().range("MESSAGES_" + rid, 0, -1);
-            for (Map.Entry<String, WebSocket> entry : onlineMap.get(rid).entrySet()) {
-                if (entry.getKey().equals(uid)) {
-                    String users = roomInfo.values().toString();
-                    entry.getValue().send(packageReply(rid, uid, GlobalConstants.MSG_ID.ENTERROOM, new JSONObject() {{
-                        put("users", users);
-                        put("messages", messages.toString());
-                    }}.toString()));
-                } else {
-                    JSONObject resp = new JSONObject();
-                    resp.put("msgid", GlobalConstants.MSG_ID.BROADCAST);
-                    resp.put("rid", rid);
-                    resp.put("uid", uid);
-                    JSONObject respMsg = new JSONObject();
-                    respMsg.put("msgtype", GlobalConstants.MSG_TYPE.ENTER);
-                    respMsg.put("srcmsgid", GlobalConstants.MSG_ID.ENTERROOM);
-                    respMsg.put("data", new JSONObject() {{
-                        put("rid", rid);
-                        put("uid", uid);
-                        put("name", name);
-                        put("img", img);
-                    }});
-                    resp.put("msg", respMsg);
-                    entry.getValue().send(JSON.toJSONString(resp));
-                }
-            }
-        } else if (msgid.equals(GlobalConstants.MSG_ID.UNICAST)) {
-        } else if (msgid.equals(GlobalConstants.MSG_ID.BROADCAST)) {
-            //广播消息：给自己响应，其它用户推送
-            String msgtype = reqMsg.getString("msgtype");
-            String data = reqMsg.getString("data");
-            if (msgtype.equals(GlobalConstants.MSG_TYPE.CHAT)) {
-                for (Map.Entry<String, WebSocket> entry : onlineMap.get(rid).entrySet()) {
-                    if (entry.getKey().equals(uid)) {
-                        entry.getValue().send(packageReply(rid, uid, GlobalConstants.MSG_ID.BROADCAST, null));
-                    } else {
-                        JSONObject resp = new JSONObject();
-                        resp.put("msgid", GlobalConstants.MSG_ID.BROADCAST);
-                        resp.put("rid", rid);
-                        resp.put("uid", uid);
-                        resp.put("img", img);
-                        resp.put("name", name);
-                        JSONObject respMsg = new JSONObject();
-                        respMsg.put("msgtype", GlobalConstants.MSG_TYPE.CHAT);
-                        respMsg.put("srcmsgid", GlobalConstants.MSG_ID.BROADCAST);
-                        respMsg.put("data", data);
-                        resp.put("msg", respMsg);
-                        entry.getValue().send(JSON.toJSONString(resp));
-                    }
-                }
-            }
-            JSONObject msg = new JSONObject();
-            msg.put("rid", rid);
-            msg.put("uid", uid);
-            msg.put("img", img);
-            msg.put("name", name);
-            msg.put("content", data);
-            Long currentIndex = rd.opsForList().rightPush("MESSAGES_" + rid, JSON.toJSONString(msg));
-            if (currentIndex > 5) {
-                rd.opsForList().leftPop("MESSAGES_" + rid);
-            }
-        } else if (msgid.equals(GlobalConstants.MSG_ID.KEEPALIVE)) {
+//        //第一版：只有signal-proxy
+//        JSONObject reqMsg = req.getJSONObject("msg");
+//        if (msgid.equals(GlobalConstants.MSG_ID.ENTERROOM)) {
+//            JSONObject val = new JSONObject() {{
+//                put("rid", rid);
+//                put("uid", uid);
+//                put("name", name);
+//                put("img", img);
+//            }};
+//            rd.opsForHash().put("USERS_" + rid, uid, val.toJSONString());
+//            rd.expire(rid, 1, TimeUnit.DAYS);
+//            //进教室消息：给自己回应当前教室列表，教室其它用户发送广播203-1
+//            Map<Object, Object> roomInfo = rd.opsForHash().entries("USERS_" + rid);
+//            List<String> messages = rd.opsForList().range("MESSAGES_" + rid, 0, -1);
+//            for (Map.Entry<String, WebSocket> entry : onlineMap.get(rid).entrySet()) {
+//                if (entry.getKey().equals(uid)) {
+//                    String users = roomInfo.values().toString();
+//                    entry.getValue().send(packageReply(rid, uid, GlobalConstants.MSG_ID.ENTERROOM, new JSONObject() {{
+//                        put("users", users);
+//                        put("messages", messages.toString());
+//                    }}.toString()));
+//                } else {
+//                    JSONObject resp = new JSONObject();
+//                    resp.put("msgid", GlobalConstants.MSG_ID.BROADCAST);
+//                    resp.put("rid", rid);
+//                    resp.put("uid", uid);
+//                    JSONObject respMsg = new JSONObject();
+//                    respMsg.put("msgtype", GlobalConstants.MSG_TYPE.ENTER);
+//                    respMsg.put("srcmsgid", GlobalConstants.MSG_ID.ENTERROOM);
+//                    respMsg.put("data", new JSONObject() {{
+//                        put("rid", rid);
+//                        put("uid", uid);
+//                        put("name", name);
+//                        put("img", img);
+//                    }});
+//                    resp.put("msg", respMsg);
+//                    entry.getValue().send(JSON.toJSONString(resp));
+//                }
+//            }
+//        } else if (msgid.equals(GlobalConstants.MSG_ID.UNICAST)) {
+//        } else if (msgid.equals(GlobalConstants.MSG_ID.BROADCAST)) {
+//            //广播消息：给自己响应，其它用户推送
+//            String msgtype = reqMsg.getString("msgtype");
+//            String data = reqMsg.getString("data");
+//            if (msgtype.equals(GlobalConstants.MSG_TYPE.CHAT)) {
+//                for (Map.Entry<String, WebSocket> entry : onlineMap.get(rid).entrySet()) {
+//                    if (entry.getKey().equals(uid)) {
+//                        entry.getValue().send(packageReply(rid, uid, GlobalConstants.MSG_ID.BROADCAST, null));
+//                    } else {
+//                        JSONObject resp = new JSONObject();
+//                        resp.put("msgid", GlobalConstants.MSG_ID.BROADCAST);
+//                        resp.put("rid", rid);
+//                        resp.put("uid", uid);
+//                        resp.put("img", img);
+//                        resp.put("name", name);
+//                        JSONObject respMsg = new JSONObject();
+//                        respMsg.put("msgtype", GlobalConstants.MSG_TYPE.CHAT);
+//                        respMsg.put("srcmsgid", GlobalConstants.MSG_ID.BROADCAST);
+//                        respMsg.put("data", data);
+//                        resp.put("msg", respMsg);
+//                        entry.getValue().send(JSON.toJSONString(resp));
+//                    }
+//                }
+//            }
+//            JSONObject msg = new JSONObject();
+//            msg.put("rid", rid);
+//            msg.put("uid", uid);
+//            msg.put("img", img);
+//            msg.put("name", name);
+//            msg.put("content", data);
+//            Long currentIndex = rd.opsForList().rightPush("MESSAGES_" + rid, JSON.toJSONString(msg));
+//            if (currentIndex > 5) {
+//                rd.opsForList().leftPop("MESSAGES_" + rid);
+//            }
+//        } else if (msgid.equals(GlobalConstants.MSG_ID.KEEPALIVE)) {
+//            //心跳消息：给自己响应
+//            conn.send(packageReply(rid, uid, GlobalConstants.MSG_ID.KEEPALIVE, null));
+//            //加入到时间轮里
+//            timeWheel.add(rid + GlobalConstants.SYMBOL.SMILE + uid, conn);
+//        }
+        //TODO 第二版：接入中心转发层
+        if (msgid.equals(GlobalConstants.MSG_ID.KEEPALIVE)) {
             //心跳消息：给自己响应
             conn.send(packageReply(rid, uid, GlobalConstants.MSG_ID.KEEPALIVE, null));
             //加入到时间轮里
             timeWheel.add(rid + GlobalConstants.SYMBOL.SMILE + uid, conn);
+        } else {
+            //收到客户端消息生产Proxy2RouterEvent到消息队列中
+            //格式为：rid|^_^|uid|^_^|message
+            Event event = new Proxy2RouterEvent(this.router, rid + GlobalConstants.SYMBOL.SMILE + uid + GlobalConstants.SYMBOL.SMILE + message);
+            EventQueue.getInstance().produce(event);
         }
-        //TODO 第二版：接入中心转发层
-//        if (msgid.equals(GlobalConstants.MSG_ID.KEEPALIVE)) {
-//            //心跳消息：给自己响应
-//            conn.send(packageReply(frid, fuid, GlobalConstants.MSG_ID.KEEPALIVE));
-//            //加入到时间轮里
-//            timeWheel.add(frid + GlobalConstants.SYMBOL.SMILE + fuid, conn);
-//        } else {
-//            //收到客户端消息生产Proxy2RouterEvent到消息队列中
-//            //格式为：rid|^_^|uid|^_^|message
-//            Event event = new Proxy2RouterEvent(this.router, frid + GlobalConstants.SYMBOL.SMILE + fuid + GlobalConstants.SYMBOL.SMILE + message);
-//            EventQueue.getInstance().produce(event);
-//        }
     }
 
     @Override
@@ -212,15 +212,15 @@ public class ProxyServer extends WebSocketServer {
     public void onStart() {
         System.out.println("ProxyServer started successfully");
         //心跳时间轮
-//        this.timeWheel = new TimeWheel<String, WebSocket>(1, 60, TimeUnit.SECONDS);
-//        this.timeWheel.addExpirationListener(new WebSocketExpirationListener<WebSocket>());
-//        this.timeWheel.start();
+        this.timeWheel = new TimeWheel<String, WebSocket>(1, 60, TimeUnit.SECONDS);
+        this.timeWheel.addExpirationListener(new WebSocketExpirationListener<WebSocket>());
+        this.timeWheel.start();
 
         //TODO 第二版：建立proxy到router的tcp连接（包括接收router消息线程和定时发送心跳线程）
-//        this.router = new TcpClient("127.0.0.1", 5555);
-//        this.router.connect();
-//        //开启消息事件消费者
-//        new Thread(new EventConsumer()).start();
+        this.router = new TcpClient("127.0.0.1", 5555);
+        this.router.connect();
+        //开启消息事件消费者
+        new Thread(new EventConsumer()).start();
     }
 
     private void handleClose(String rid, String uid) {
