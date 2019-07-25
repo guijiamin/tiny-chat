@@ -2,7 +2,9 @@ package com.study.signalproxy.service;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import com.study.signalproxy.constant.GlobalConstants;
+import com.google.protobuf.InvalidProtocolBufferException;
+import com.study.signalcommon.constant.GlobalConstants;
+import com.study.signalcommon.proto.MessageProto;
 import com.study.signalproxy.dto.Event;
 import com.study.signalproxy.dto.Proxy2RouterEvent;
 import com.study.signalproxy.util.SpringUtil;
@@ -10,13 +12,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.java_websocket.WebSocket;
 import org.java_websocket.handshake.ClientHandshake;
 import org.java_websocket.server.WebSocketServer;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.DependsOn;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.*;
@@ -103,6 +100,11 @@ public class ProxyServer extends WebSocketServer {
     @Override
     public void onMessage(WebSocket conn, String message) {
         log.info("Receive msg: {} from: {}", message, conn.getRemoteSocketAddress());
+        try {
+            MessageProto.Msg msg = MessageProto.Msg.parseFrom(message.getBytes());
+        } catch (InvalidProtocolBufferException e) {
+
+        }
         JSONObject req = JSONObject.parseObject(message);
         String msgid = req.getString("msgid");
         String rid = req.getString("rid");

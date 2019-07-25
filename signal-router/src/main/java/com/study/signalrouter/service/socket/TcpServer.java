@@ -3,14 +3,15 @@ package com.study.signalrouter.service.socket;
 import com.study.signalrouter.service.SocketExpirationListener;
 import com.study.signalrouter.service.TimeWheel;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.http.client.HttpClient;
+import org.apache.http.impl.client.HttpClients;
 
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 /**
  * Decription
@@ -29,6 +30,12 @@ public class TcpServer {
     private Map<String, Map<String, String>> roomUser2proxy = new ConcurrentHashMap<>();
     private TimeWheel<String, Socket> timeWheel;
 
+    protected final static ThreadPoolExecutor executor = new ThreadPoolExecutor(10, 100,
+            60L, TimeUnit.MILLISECONDS,
+            new LinkedBlockingQueue<>());
+
+    protected final static HttpClient httpclient = HttpClients.createDefault();
+
     public TcpServer(int port) {
         this.port = port;
     }
@@ -44,12 +51,16 @@ public class TcpServer {
         } catch (IOException e) {
             this.runFlag = false;
         }
-        //服务启动后开启时间轮维护心跳包
+        //服务启动后开启时间轮维护心跳包，开启线程池
         if (this.runFlag) {
             this.timeWheel = new TimeWheel<String, Socket>(1, 60, TimeUnit.SECONDS);
             this.timeWheel.addExpirationListener(new SocketExpirationListener<Socket>());
             this.timeWheel.start();
             System.out.println("tcp server timewheel is started");
+
+//            this.executor = new ThreadPoolExecutor(10, 100,
+//                    60L, TimeUnit.MILLISECONDS,
+//                    new LinkedBlockingQueue<>());
         }
 
         while (this.runFlag) {

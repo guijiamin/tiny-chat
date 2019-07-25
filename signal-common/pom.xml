@@ -9,10 +9,10 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.study</groupId>
-	<artifactId>signal-worker</artifactId>
+	<artifactId>signal-common</artifactId>
 	<version>0.0.1</version>
-	<name>signal-worker</name>
-	<description>Signal worker for Spring Boot</description>
+	<name>signalcommon</name>
+	<description>SignalCommon for Spring Boot</description>
 
 	<properties>
 		<java.version>1.8</java.version>
@@ -20,23 +20,16 @@
 
 	<dependencies>
 		<dependency>
-			<groupId>com.study</groupId>
-			<artifactId>signal-common</artifactId>
-			<version>0.0.1</version>
-		</dependency>
-		<dependency>
 			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-web</artifactId>
+			<artifactId>spring-boot-starter</artifactId>
 		</dependency>
+		<!-- https://mvnrepository.com/artifact/com.google.protobuf/protobuf-java -->
 		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-data-redis</artifactId>
+			<groupId>com.google.protobuf</groupId>
+			<artifactId>protobuf-java</artifactId>
+			<version>3.7.1</version>
 		</dependency>
-		<dependency>
-			<groupId>com.alibaba</groupId>
-			<artifactId>fastjson</artifactId>
-			<version>1.2.41</version>
-		</dependency>
+
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>

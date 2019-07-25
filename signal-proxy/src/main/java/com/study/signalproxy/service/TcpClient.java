@@ -67,14 +67,11 @@ public class TcpClient {
             System.out.println("ReceiveMsgWatchDog is running...");
             while (TcpClient.this.runFlag) {
                 try {
-                    if (in != null) {
-                        final String data = in.readUTF();
-                        //收到消息，扔到消息队列
-                        Router2ProxyEvent event = new Router2ProxyEvent(data);
-                        EventQueue.getInstance().produce(event);
-                    }
+                    final String data = in.readUTF();
+                    //收到消息，扔到消息队列
+                    Router2ProxyEvent event = new Router2ProxyEvent(data);
+                    EventQueue.getInstance().produce(event);
                 } catch (EOFException e) {
-                    log.warn("EOFException");
                 } catch (IOException e) {
                     log.error("read input stream exception: {}", e.getMessage());
                     e.printStackTrace();

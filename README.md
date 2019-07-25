@@ -21,12 +21,15 @@
 ##### 4.1 spring-boot构建http-server
 ##### 4.2 redis持久化业务数据
 
-### 5、参考
-##### 5.1 java-websocket
+### 5、signal-common
+> 聊天服务公共模块
+
+### 6、参考
+##### 6.1 java-websocket
 https://github.com/TooTallNate/Java-WebSocket
-##### 5.2 tcp-socket
+##### 6.2 tcp-socket
 https://github.com/jzj1993/JavaTcpSocket
-##### 5.3 emoji
+##### 6.3 emoji
 https://github.com/joaoeudes7/V-Emoji-Picker
-##### 5.4 vue-chat
+##### 6.4 vue-chat
 https://github.com/coffcer/vue-chat

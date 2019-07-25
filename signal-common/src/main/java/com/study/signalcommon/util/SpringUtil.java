@@ -1,4 +1,4 @@
-package com.study.signalworker.util;
+package com.study.signalcommon.util;
 
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
@@ -44,3 +44,4 @@ public class SpringUtil implements ApplicationContextAware {
     }
 
 }
+

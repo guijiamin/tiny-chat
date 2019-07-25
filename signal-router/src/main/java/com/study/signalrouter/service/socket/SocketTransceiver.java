@@ -1,14 +1,21 @@
 package com.study.signalrouter.service.socket;
 
 import com.alibaba.fastjson.JSONObject;
-import com.study.signalrouter.constant.GlobalConstants;
+import com.study.signalcommon.constant.GlobalConstants;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.util.EntityUtils;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Decription
@@ -91,7 +98,6 @@ public abstract class SocketTransceiver implements Runnable {
         while (this.runFlag) {
             try {
                 final String msg = in.readUTF();
-                //TODO 收到消息后处理和回应
                 String[] splitMsg = msg.split(GlobalConstants.REGEX.SMILE);
                 if (splitMsg.length == 3) {
                     String headerRid = splitMsg[0];
@@ -105,8 +111,29 @@ public abstract class SocketTransceiver implements Runnable {
                             break;
                         case GlobalConstants.MSG_ID.ENTERROOM://收到201进教室消息
                             //TODO 以http发送给worker，收到回应后处理
-                            this.send("{\"msgid\":\"200\",\"msg\":{\"data\": \"收到proxy的进教室消息\",\"srcmagid\":\"201\"}}");//处理：回复给自己状态
-                            this.onUserEnterRoom(this.ip, headerRid, headerUid);//处理：回调房间列表广播给当前房间其它用户
+//                            this.send("{\"msgid\":\"200\",\"msg\":{\"data\": \"收到proxy的进教室消息\",\"srcmsgid\":\"201\"}}");//处理：回复给自己状态
+//                            this.onUserEnterRoom(this.ip, headerRid, headerUid);//处理：回调房间列表广播给当前房间其它用户
+                            Future<HttpResponse> future = TcpServer.executor.submit(new Callable<HttpResponse>() {
+                                @Override
+                                public HttpResponse call() {
+                                    HttpPost httpPost = new HttpPost("http://localhost:8080/chat");
+                                    httpPost.addHeader("Content-Type", "application/json; charset=utf-8");
+                                    httpPost.setEntity(new StringEntity(msgBody.toString(), "utf-8"));
+                                    HttpResponse response = null;
+                                    try {
+                                        response = TcpServer.httpclient.execute(httpPost);
+                                    } catch (IOException e) {
+                                        log.error(e.getMessage());
+                                    }
+                                    return response;
+                                }
+                            });
+                            try {
+                                HttpResponse response = future.get();
+                                log.info("回应：{}", EntityUtils.toString(response.getEntity()));
+                            } catch (Exception e) {
+
+                            }
                             break;
                         case GlobalConstants.MSG_ID.UNICAST://收到202单播消息
                             break;
