@@ -472,11 +472,11 @@ proto.Msg.prototype.toObject = function(opt_includeInstance) {
  */
 proto.Msg.toObject = function(includeInstance, msg) {
   var f, obj = {
-    msgid: jspb.Message.getFieldWithDefault(msg, 1, ""),
-    msgtype: jspb.Message.getFieldWithDefault(msg, 2, ""),
-    extendMap: (f = msg.getExtendMap()) ? f.toObject(includeInstance, undefined) : [],
+    msgid: jspb.Message.getFieldWithDefault(msg, 1, 0),
+    msgtype: jspb.Message.getFieldWithDefault(msg, 2, 0),
     fuser: (f = msg.getFuser()) && proto.User.toObject(includeInstance, f),
-    tuser: (f = msg.getTuser()) && proto.User.toObject(includeInstance, f)
+    tuser: (f = msg.getTuser()) && proto.User.toObject(includeInstance, f),
+    extendMap: (f = msg.getExtendMap()) ? f.toObject(includeInstance, undefined) : []
   };
 
   if (includeInstance) {
@@ -514,28 +514,28 @@ proto.Msg.deserializeBinaryFromReader = function(msg, reader) {
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {number} */ (reader.readUint32());
       msg.setMsgid(value);
       break;
     case 2:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {number} */ (reader.readUint32());
       msg.setMsgtype(value);
       break;
     case 3:
-      var value = msg.getExtendMap();
-      reader.readMessage(value, function(message, reader) {
-        jspb.Map.deserializeBinary(message, reader, jspb.BinaryReader.prototype.readString, jspb.BinaryReader.prototype.readString, null, "");
-         });
-      break;
-    case 4:
       var value = new proto.User;
       reader.readMessage(value,proto.User.deserializeBinaryFromReader);
       msg.setFuser(value);
       break;
-    case 5:
+    case 4:
       var value = new proto.User;
       reader.readMessage(value,proto.User.deserializeBinaryFromReader);
       msg.setTuser(value);
+      break;
+    case 5:
+      var value = msg.getExtendMap();
+      reader.readMessage(value, function(message, reader) {
+        jspb.Map.deserializeBinary(message, reader, jspb.BinaryReader.prototype.readString, jspb.BinaryReader.prototype.readString, null, "");
+         });
       break;
     default:
       reader.skipField();
@@ -567,27 +567,23 @@ proto.Msg.prototype.serializeBinary = function() {
 proto.Msg.serializeBinaryToWriter = function(message, writer) {
   var f = undefined;
   f = message.getMsgid();
-  if (f.length > 0) {
-    writer.writeString(
+  if (f !== 0) {
+    writer.writeUint32(
       1,
       f
     );
   }
   f = message.getMsgtype();
-  if (f.length > 0) {
-    writer.writeString(
+  if (f !== 0) {
+    writer.writeUint32(
       2,
       f
     );
   }
-  f = message.getExtendMap(true);
-  if (f && f.getLength() > 0) {
-    f.serializeBinary(3, writer, jspb.BinaryWriter.prototype.writeString, jspb.BinaryWriter.prototype.writeString);
-  }
   f = message.getFuser();
   if (f != null) {
     writer.writeMessage(
-      4,
+      3,
       f,
       proto.User.serializeBinaryToWriter
     );
@@ -595,78 +591,61 @@ proto.Msg.serializeBinaryToWriter = function(message, writer) {
   f = message.getTuser();
   if (f != null) {
     writer.writeMessage(
-      5,
+      4,
       f,
       proto.User.serializeBinaryToWriter
     );
+  }
+  f = message.getExtendMap(true);
+  if (f && f.getLength() > 0) {
+    f.serializeBinary(5, writer, jspb.BinaryWriter.prototype.writeString, jspb.BinaryWriter.prototype.writeString);
   }
 };
 
 
 /**
- * optional string msgid = 1;
- * @return {string}
+ * optional uint32 msgid = 1;
+ * @return {number}
  */
 proto.Msg.prototype.getMsgid = function() {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ""));
+  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 1, 0));
 };
 
 
-/** @param {string} value */
+/** @param {number} value */
 proto.Msg.prototype.setMsgid = function(value) {
-  jspb.Message.setProto3StringField(this, 1, value);
+  jspb.Message.setProto3IntField(this, 1, value);
 };
 
 
 /**
- * optional string msgtype = 2;
- * @return {string}
+ * optional uint32 msgtype = 2;
+ * @return {number}
  */
 proto.Msg.prototype.getMsgtype = function() {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 2, ""));
+  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 2, 0));
 };
 
 
-/** @param {string} value */
+/** @param {number} value */
 proto.Msg.prototype.setMsgtype = function(value) {
-  jspb.Message.setProto3StringField(this, 2, value);
+  jspb.Message.setProto3IntField(this, 2, value);
 };
 
 
 /**
- * map<string, string> extend = 3;
- * @param {boolean=} opt_noLazyCreate Do not create the map if
- * empty, instead returning `undefined`
- * @return {!jspb.Map<string,string>}
- */
-proto.Msg.prototype.getExtendMap = function(opt_noLazyCreate) {
-  return /** @type {!jspb.Map<string,string>} */ (
-      jspb.Message.getMapField(this, 3, opt_noLazyCreate,
-      null));
-};
-
-
-/**
- * Clears values from the map. The map will be non-null.
- */
-proto.Msg.prototype.clearExtendMap = function() {
-  this.getExtendMap().clear();
-};
-
-
-/**
- * optional User fuser = 4;
+ * optional User fuser = 3;
  * @return {?proto.User}
  */
 proto.Msg.prototype.getFuser = function() {
   return /** @type{?proto.User} */ (
-    jspb.Message.getWrapperField(this, proto.User, 4));
+    jspb.Message.getWrapperField(this, proto.User, 3));
 };
 
 
 /** @param {?proto.User|undefined} value */
 proto.Msg.prototype.setFuser = function(value) {
-  jspb.Message.setWrapperField(this, 4, value);
+  jspb.Message.setWrapperField(this, 3, value);
 };
 
 
@@ -683,23 +662,23 @@ proto.Msg.prototype.clearFuser = function() {
  * @return {boolean}
  */
 proto.Msg.prototype.hasFuser = function() {
-  return jspb.Message.getField(this, 4) != null;
+  return jspb.Message.getField(this, 3) != null;
 };
 
 
 /**
- * optional User tuser = 5;
+ * optional User tuser = 4;
  * @return {?proto.User}
  */
 proto.Msg.prototype.getTuser = function() {
   return /** @type{?proto.User} */ (
-    jspb.Message.getWrapperField(this, proto.User, 5));
+    jspb.Message.getWrapperField(this, proto.User, 4));
 };
 
 
 /** @param {?proto.User|undefined} value */
 proto.Msg.prototype.setTuser = function(value) {
-  jspb.Message.setWrapperField(this, 5, value);
+  jspb.Message.setWrapperField(this, 4, value);
 };
 
 
@@ -716,7 +695,28 @@ proto.Msg.prototype.clearTuser = function() {
  * @return {boolean}
  */
 proto.Msg.prototype.hasTuser = function() {
-  return jspb.Message.getField(this, 5) != null;
+  return jspb.Message.getField(this, 4) != null;
+};
+
+
+/**
+ * map<string, string> extend = 5;
+ * @param {boolean=} opt_noLazyCreate Do not create the map if
+ * empty, instead returning `undefined`
+ * @return {!jspb.Map<string,string>}
+ */
+proto.Msg.prototype.getExtendMap = function(opt_noLazyCreate) {
+  return /** @type {!jspb.Map<string,string>} */ (
+      jspb.Message.getMapField(this, 5, opt_noLazyCreate,
+      null));
+};
+
+
+/**
+ * Clears values from the map. The map will be non-null.
+ */
+proto.Msg.prototype.clearExtendMap = function() {
+  this.getExtendMap().clear();
 };
 
 

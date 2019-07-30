@@ -14,7 +14,7 @@ import java.util.concurrent.TimeUnit;
  * @author guijiamin.
  */
 public class EventQueue {
-    private static EventQueue instance;
+    private static volatile EventQueue instance;
 
     private ConcurrentLinkedQueue<Event> channel = new ConcurrentLinkedQueue<>();
 

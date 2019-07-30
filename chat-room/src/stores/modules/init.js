@@ -1,4 +1,4 @@
-import {CustomMap} from '../../utils/Map.js'
+import {CustomMap} from '../../utils/CustomMap.js'
 
 const state = {
   WS: undefined,
@@ -23,13 +23,13 @@ const mutations = {
   },
   ws_enter_room(state, info) {
     // state.users = users
-    let users = JSON.parse(info.users)
-    console.log(info.messages)
-    let messages = JSON.parse(info.messages)
-    users.forEach(i => {
+    // let users = JSON.parse(info.users)
+    // console.log(info.messages)
+    // let messages = JSON.parse(info.messages)
+    info.forEach(i => {
       state.online_users.put(i.rid + '@' + i.uid + '@' + i.name, i)
     })
-    state.messages = messages
+    // state.messages = messages
     console.log(state.online_users)
   },
   ws_one_enter(state, user) {

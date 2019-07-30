@@ -14,7 +14,9 @@ import Card from './Card.vue';
 import List from './List.vue';
 import Message from './Message.vue';
 import Text from './Text.vue';
-import {CustomMap} from '../utils/Map.js'
+import {CustomMap} from '../utils/CustomMap.js';
+import {MSG_ID, MSG_TYPE} from '../utils/Constants.js';
+import message from '../proto/message.js';
 export default {
   data() {
     return {
@@ -49,35 +51,45 @@ export default {
       this.$store.commit('ws_open', this.WS)
     },
     wsOnmessage(evt) {
-      console.log('收到消息', evt.data)
-  
-      let data = JSON.parse(evt.data)
-      if (data.msgid == '200') {
-        // console.log(data.msg.data)
-        if (data.msg.srcmsgid == '201') {
-          this.$store.commit('ws_enter_room', JSON.parse(data.msg.data))
-        }
-        this.keepAlive()
-      } else if (data.msgid == '203') {
-        let msgtype = data.msg.msgtype
-        if (msgtype == '1') {//someone enter
-          // console.log(data.msg.data)
-          //增加在线列表
-          this.$store.commit('ws_one_enter', data.msg.data)
-        } else if (msgtype == '2') {//someone leave
-          // console.log(data.msg.data)
-          //删除在线列表
-          this.$store.commit('ws_one_leave', data.msg.data)
-        } else if (msgtype == '3') {//someone msg
-          // console.log(data.msg)
-          let message = {
-            rid: data.rid,
-            uid: data.uid,
-            name: data.name,
-            img: data.img,
-            content: data.msg.data
+      console.log('收到消息', evt)
+      let self = this
+      let win = window
+      let reader = new FileReader()
+      reader.readAsArrayBuffer(evt.data)
+      reader.onload = function (e) {
+        let buf = new Uint8Array(reader.result)
+        let msg = proto.Msg.deserializeBinary(buf)
+        console.log('转换二进制', msg.toObject())
+        win.m = msg
+        console.log(typeof(msg))
+        if (msg.getMsgid() == MSG_ID.REPLY) {
+          console.log('receive reply')
+          self.$store.commit('ws_enter_room', JSON.parse(msg.getExtendMap().get('data')))
+          // this.keepAlive()
+        } else if (msg.getMsgid() == MSG_ID.BROADCAST) {
+          let msgtype = msg.getMsgtype()
+          if (msgtype == MSG_TYPE.ENTER) {//someone enter
+            console.log('someone enter')
+            // console.log(data.msg.data)
+            //增加在线列表
+            self.$store.commit('ws_one_enter', JSON.parse(msg.getExtendMap().get('data')))
+          } else if (msgtype == MSG_TYPE.LEAVE) {//someone leave
+            console.log('someone leave')
+            // console.log(data.msg.data)
+            //删除在线列表
+            // self.$store.commit('ws_one_leave', data.msg.data)
+          } else if (msgtype == MSG_TYPE.CHAT) {//someone chat
+            console.log('someone chat')
+            // console.log(data.msg)
+            // let message = {
+            //   rid: data.rid,
+            //   uid: data.uid,
+            //   name: data.name,
+            //   img: data.img,
+            //   content: data.msg.data
+            // }
+            // this.$store.commit('ws_chat_come', message)
           }
-          this.$store.commit('ws_chat_come', message)
         }
       }
     },
@@ -88,14 +100,56 @@ export default {
       this.WS.send(val)
     },
     keepAlive() {
-      let msg = {
-        "msgid": "15",
-        "rid": this.self_user.rid,
-        "uid": this.self_user.uid,
-        "name": this.self_user.name,
-        "img": this.self_user.img
+      // let msg = {
+      //   "msgid": "15",
+      //   "rid": this.self_user.rid,
+      //   "uid": this.self_user.uid,
+      //   "name": this.self_user.name,
+      //   "img": this.self_user.img
+      // }
+      // setInterval(() => {this.sendMsg(JSON.stringify(msg))}, 5000)
+      // let m = new proto.Msg();
+      // m.setMsgid(101);
+      // m.setMsgtype(0);
+      // // m.getExtendMap().set("1","2");
+      // let fuser = new proto.User();
+      // fuser.setRid("heartbeat");
+      // fuser.setUid("heartbeat");
+      // fuser.setName("heartbeat");
+      // fuser.setImg("heartbeat");
+      // m.setFuser(fuser);
+      // m.setTuser(fuser);
+      // console.log(m.toObject());
+      // //序列化
+      // let bytes = m.serializeBinary();
+      // // console.log(bytes);
+      // setInterval(() => {this.sendMsg(bytes)}, 5000)
+      let m1 = new proto.Msg();
+      m1.setMsgid(101);
+      m1.setMsgtype(1);
+      // m.getExtendMap().set("1","2");
+      let fuser1 = new proto.User();
+      fuser1.setRid("jz123");
+      fuser1.setUid("123");
+      fuser1.setName("gjm");
+      fuser1.setImg("avatar1.svg");
+      m1.setFuser(fuser1);
+      m1.setTuser(fuser1);
+      console.log(m1.toObject());
+      //序列化
+      let bytes1 = m1.serializeBinary();
+      console.log(bytes1)
+      setTimeout(() => this.sendMsg(bytes1),1000)
+    },
+    parseBlob(val) {
+      let reader = new FileReader()
+      reader.readAsArrayBuffer(val)
+      reader.onload = function (e) {
+        let buf = new Uint8Array(reader.result)
+        let m = proto.Msg.deserializeBinary(buf).toObject()
+        console.log('转换二进制', m)
+        return m
       }
-      setInterval(() => {this.sendMsg(JSON.stringify(msg))}, 5000)
     }
   },
   computed: {
@@ -111,21 +165,27 @@ export default {
   },
   watch:  {
     init_timestamp(val) {
-      console.log('trigger init_timestamp:' + val)
+      console.log('开始创建ws连接:' + val)
       //获取到参数，创建ws连接
       this.createWebsocket()
     },
     ws_open_timestamp(val) {
-      console.log('trigger ws_open_timestamp', val)
-      //发送201进教室
-      let msg = {
-        "msgid": "201",
-        "rid": this.self_user.rid,
-        "uid": this.self_user.uid,
-        "name": this.self_user.name,
-        "img": this.self_user.img
-      }
-      this.sendMsg(JSON.stringify(msg))
+      console.log('ws连接已打开：' + val)
+      //发送进教室消息
+      let msg = new proto.Msg()
+      msg.setMsgid(MSG_ID.ENTERROOM)
+      msg.setMsgtype(MSG_TYPE.ENTER)
+      let fuser = new proto.User()
+      fuser.setRid(this.self_user.rid)
+      fuser.setUid(this.self_user.uid)
+      fuser.setName(this.self_user.name)
+      fuser.setImg(this.self_user.img)
+      msg.setFuser(fuser)
+      msg.setTuser(fuser)
+      console.log("发送进教室消息", msg.toObject())
+      //序列化
+      let bytes = msg.serializeBinary()
+      this.sendMsg(bytes)
     }
   },
   mounted() {

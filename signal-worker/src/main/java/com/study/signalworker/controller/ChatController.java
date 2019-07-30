@@ -2,6 +2,8 @@ package com.study.signalworker.controller;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.google.protobuf.InvalidProtocolBufferException;
+import com.study.signalcommon.protobuf.MessageProto;
 import com.study.signalworker.service.ChatService;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -23,8 +25,7 @@ public class ChatController {
     private ChatService chatService;
 
     @PostMapping("/chat")
-    public JSONObject chat(@RequestBody String req) {
-
-        return chatService.chat(JSON.parseObject(req));
+    public byte[] chat(@RequestBody byte[] reqMsg) throws InvalidProtocolBufferException {
+        return chatService.chat(MessageProto.Msg.parseFrom(reqMsg)).toByteArray();
     }
 }

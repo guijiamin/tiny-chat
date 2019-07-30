@@ -1,7 +1,8 @@
 package com.study.signalrouter.service.socket;
 
+import com.study.signalcommon.component.TimeWheel;
+import com.study.signalcommon.constant.GlobalConstants;
 import com.study.signalrouter.service.SocketExpirationListener;
-import com.study.signalrouter.service.TimeWheel;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.HttpClients;
@@ -27,7 +28,8 @@ public class TcpServer {
     private boolean runFlag;
     private ServerSocket server;
     private Map<String, SocketTransceiver> proxy2socket = new ConcurrentHashMap<>();
-    private Map<String, Map<String, String>> roomUser2proxy = new ConcurrentHashMap<>();
+    private Map<String, HashSet<String>> room2proxys = new ConcurrentHashMap<>();
+    private Map<String, Map<String, SocketTransceiver>> roomUser2socket = new ConcurrentHashMap<>();
     private TimeWheel<String, Socket> timeWheel;
 
     protected final static ThreadPoolExecutor executor = new ThreadPoolExecutor(10, 100,
@@ -44,7 +46,7 @@ public class TcpServer {
      * 启动服务器
      */
     public void start() {
-        System.out.println("tcp server is ready to start...");
+        System.out.println("Tcp server is ready to start...");
         this.runFlag = true;
         try {
             server = new ServerSocket(port);
@@ -56,7 +58,7 @@ public class TcpServer {
             this.timeWheel = new TimeWheel<String, Socket>(1, 60, TimeUnit.SECONDS);
             this.timeWheel.addExpirationListener(new SocketExpirationListener<Socket>());
             this.timeWheel.start();
-            System.out.println("tcp server timewheel is started");
+            System.out.println("Tcp server timewheel is started");
 
 //            this.executor = new ThreadPoolExecutor(10, 100,
 //                    60L, TimeUnit.MILLISECONDS,
@@ -67,36 +69,50 @@ public class TcpServer {
             try {
                 //阻塞模式获取客户端连接
                 final Socket socket = server.accept();
+                System.out.println("接收到连接：" + socket.getInetAddress().getHostAddress());
                 //接收到客户端连接就创建一个客户端收发器
                 SocketTransceiver client = new SocketTransceiver(socket) {
+                    //用户进教室回调
+                    //1、维护roomUser2socket列表
+                    //2、遍历roomUser2socket列表，不是当前房间的其它用户的发送103/1广播消息
                     @Override
-                    public void onUserEnterRoom(String proxy, String rid, String uid) {
-                        if (TcpServer.this.roomUser2proxy.containsKey(rid)) {
-
-                            new HashSet<>(TcpServer.this.roomUser2proxy.get(rid).values()).forEach(ip -> {
-                                if (TcpServer.this.proxy2socket.containsKey(ip)) {
-                                    TcpServer.this.proxy2socket.get(ip).send("{\"msgid\":\"203\",\"rid\":\"jz123\",\"uid\":\"123\",\"name\":\"lihua\",\"msg\":{\"msgtype\":\"1\",\"data\":{\"rid\":\"jz123\",\"uid\":\"123\",\"name\":\"lihua\"}}}");
-                                }
-                            });
-
+                    public void onUserEnterRoom(SocketTransceiver socket, String rid, String uid, byte[] responseMsg, byte[] routerMsg) {
+                        if (TcpServer.this.roomUser2socket.containsKey(rid)) {
+                            TcpServer.this.roomUser2socket.get(rid).put(uid, socket);
+                        } else {
+                            HashMap<String, SocketTransceiver> map = new HashMap<>();
+                            map.put(uid, socket);
+                            TcpServer.this.roomUser2socket.put(rid, map);
                         }
-                        Map<String, String> user2proxy = new HashMap<>();
-                        user2proxy.put(uid, proxy);
-                        TcpServer.this.roomUser2proxy.put(rid, user2proxy);
+                        System.out.println("!!!" + TcpServer.this.roomUser2socket.get(rid).size());
+                        TcpServer.this.roomUser2socket.get(rid).forEach((key, val) -> {
+                            if (key.equals(uid)) {
+                                val.send(GlobalConstants.MSG_ID.REPLY, responseMsg);
+                                System.out.println("发送回应消息给" + rid + "-" + uid);
+                            } else {
+                                val.send(GlobalConstants.MSG_ID.BROADCAST, routerMsg);
+                                System.out.println("发送广播消息给" + rid + "-" + uid);
+                            }
+                        });
                     }
 
+                    //用户离开教室消息回调
+                    //1、维护room2proxys列表
+                    //2、对于当前传入proxy发送回应消息，不是当前传入proxy的其它proxy发送103/2广播消息
                     @Override
-                    public void onUserLeaveRoom(String proxy, String rid, String uid) {
-                        if (TcpServer.this.roomUser2proxy.containsKey(rid) && TcpServer.this.roomUser2proxy.get(rid).containsKey(uid)) {
-                            TcpServer.this.roomUser2proxy.get(rid).remove(uid);
-                        }
+                    public void onUserLeaveRoom(String proxy, String rid, byte[] msg) {
+//                        if (TcpServer.this.roomUser2proxy.containsKey(rid) && TcpServer.this.roomUser2proxy.get(rid).containsKey(uid)) {
+//                            TcpServer.this.roomUser2proxy.get(rid).remove(uid);
+//                        }
                     }
 
+                    //解析消息后发现是proxy的心跳消息，回调激活时间轮
                     @Override
                     public void onProxyHeartBeat(String proxy) {
                         TcpServer.this.timeWheel.add(proxy, socket);
                     }
 
+                    //某个proxy断连，回调
                     @Override
                     public void onDisconnect(String proxy) {
                         TcpServer.this.proxy2socket.remove(proxy);
@@ -105,18 +121,19 @@ public class TcpServer {
                 //开启一个客户端线程
                 client.start();
                 //接收到客户端连接加入时间轮，当收到proxy的心跳包会激活时间轮
-                this.timeWheel.add(client.getIp(), socket);
+//                this.timeWheel.add(client.getIp(), socket);
                 //添加到客户端连接列表里
                 this.proxy2socket.put(client.getIp(), client);
+                System.out.println(this.proxy2socket.size());
             } catch (IOException e) {
-                log.error("接收客户端连接异常：{}", e.getMessage());
+                log.error("Accept socket exception：{}", e.getMessage());
             }
         }
         //停止服务器后this.runFlag=false，断开与每个客户端的连接
         try {
             server.close();
         } catch (IOException e) {
-            log.error("服务端关闭异常：{}", e.getMessage());
+            log.error("Tcp server close exception：{}", e.getMessage());
         }
     }
 

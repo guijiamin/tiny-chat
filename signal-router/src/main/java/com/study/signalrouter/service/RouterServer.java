@@ -1,7 +1,6 @@
 package com.study.signalrouter.service;
 
-import com.study.signalrouter.service.TimeWheel;
-import com.study.signalrouter.service.socket.SocketTransceiver;
+import com.study.signalcommon.constant.GlobalConstants;
 import com.study.signalrouter.service.socket.TcpServer;
 
 import java.io.*;
@@ -51,6 +50,6 @@ public class RouterServer {
 //        timeWheel = new TimeWheel<>(1, 60, TimeUnit.SECONDS);
 //        timeWheel.start();
         //创建serversocket服务监听
-        new TcpServer(5555).start();
+        new TcpServer(GlobalConstants.SERVER_PORT.ROUTER).start();
     }
 }

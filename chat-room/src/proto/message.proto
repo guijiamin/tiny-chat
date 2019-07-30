@@ -1,11 +1,11 @@
 syntax = "proto3";
 
 message Msg {
-    string msgid = 1;
-    string msgtype = 2;
-    map<string, string> extend = 3;
-    User fuser = 4;
-    User tuser = 5;
+    uint32 msgid = 1;
+    uint32 msgtype = 2;
+    User fuser = 3;
+    User tuser = 4;
+    map<string, string> extend = 5;
 }
 
 message User {

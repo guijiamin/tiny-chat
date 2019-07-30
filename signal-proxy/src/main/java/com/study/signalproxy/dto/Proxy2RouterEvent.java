@@ -12,16 +12,18 @@ import com.study.signalproxy.service.TcpClient;
  */
 public class Proxy2RouterEvent implements Event {
     private TcpClient router;
-    private String msg;
+    private int msgid;
+    private byte[] msg;
 
-    public Proxy2RouterEvent(TcpClient router, String msg) {
+    public Proxy2RouterEvent(TcpClient router, int msgid, byte[] msg) {
         this.router = router;
+        this.msgid = msgid;
         this.msg = msg;
     }
 
     @Override
     public void processor() {
         //将消息发送给router
-        router.send(msg);
+        this.router.send(msgid, msg);
     }
 }

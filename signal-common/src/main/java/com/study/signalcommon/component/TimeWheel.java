@@ -1,4 +1,4 @@
-package com.study.signalrouter.service;
+package com.study.signalcommon.component;
 
 import lombok.Data;
 
@@ -55,6 +55,33 @@ public class TimeWheel<K,V> {
         wheel.trimToSize();
 
         workerThread = new Thread(new TickWorker(), "Timing-Wheel");
+    }
+
+    public TimeWheel(long tickDuration, int ticksPerWheel, TimeUnit timeUnit, ExpirationListener<V> listener) {
+        if (timeUnit == null) {
+            timeUnit = TimeUnit.MILLISECONDS;
+        }
+
+        if (tickDuration <= 0) {
+            throw new IllegalArgumentException("tickDuration must be greater than 0: " + tickDuration);
+        }
+
+        if (ticksPerWheel <= 0) {
+            throw new IllegalArgumentException("ticksPerWheel must be greater than 0: " + ticksPerWheel);
+        }
+
+        this.wheel = new ArrayList<Slot<K,V>>();
+        this.tickDuration = TimeUnit.MILLISECONDS.convert(tickDuration, timeUnit);
+        this.ticksPerWheel = ticksPerWheel;
+
+        for (int i = 0; i < this.ticksPerWheel; i++) {
+            wheel.add(new Slot<K, V>(i));
+        }
+        wheel.trimToSize();
+
+        workerThread = new Thread(new TickWorker(), "Timing-Wheel");
+
+        expirationListeners.add(listener);
     }
 
     public void start() {
@@ -234,4 +261,3 @@ public class TimeWheel<K,V> {
         }
     }
 }
-

@@ -7,14 +7,14 @@
     </body>
     <script type="text/javascript">
         var m = new proto.Msg();
-        m.setMsgid("200");
-        m.setMsgtype("1");
+        m.setMsgid(15);
+        m.setMsgtype(0);
         m.getExtendMap().set("1","2");
         var fuser = new proto.User();
         fuser.setRid("jz123");
         fuser.setUid("123");
         fuser.setName("gjm");
-        fuser.setImg("avatar.svg");
+        fuser.setImg("avatar1.svg");
         m.setFuser(fuser);
         m.setTuser(fuser);
         console.log(m.toObject());
@@ -25,5 +25,6 @@
         var m2 = proto.Msg.deserializeBinary(bytes);
         console.log(m2.toObject());
         console.log(m2.getFuser().getRid())
+
     </script>
 </html>

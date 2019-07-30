@@ -1,4 +1,4 @@
-package com.study.signalrouter.service;
+package com.study.signalcommon.component;
 
 /**
  * Decription

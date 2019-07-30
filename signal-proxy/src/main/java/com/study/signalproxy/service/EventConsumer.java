@@ -14,20 +14,22 @@ public class EventConsumer implements Runnable {
     @Override
     public void run() {
         while (true) {
-            try {
-                Thread.sleep(10 * 1000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+//            try {
+//                Thread.sleep(1 * 1000);
+//            } catch (InterruptedException e) {
+//                e.printStackTrace();
+//            }
+            int before = EventQueue.getInstance().size();
+            if (before > 0) {
+                System.out.println("消费之前队列大小：" + before);
+                //从队列获取事件，使用相应的事件处理器处理事件
+                Event event = EventQueue.getInstance().consume();
+                if (event != null) {
+                    System.out.println("EventConsumer consume...");
+                    event.processor();
+                }
+                System.out.println("消费之后队列大小：" + EventQueue.getInstance().size());
             }
-
-            System.out.println("消费之前队列大小：" + EventQueue.getInstance().size());
-            //从队列获取事件，使用相应的事件处理器处理事件
-            Event event = EventQueue.getInstance().consume();
-            if (event != null) {
-                System.out.println("EventConsumer consume...");
-                event.processor();
-            }
-            System.out.println("消费之后队列大小：" + EventQueue.getInstance().size());
         }
     }
 }
