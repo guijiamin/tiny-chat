@@ -172,7 +172,7 @@ public class TimeWheel<K,V> {
 
     private void notifyExpired(int idx) {
         Slot<K, V> slot = wheel.get(idx);
-        System.out.println("notify: " + idx + ", size: " + wheel.get(getPreviousTickIndex()).elements.size());
+//        System.out.println("notify: " + idx + ", size: " + wheel.get(getPreviousTickIndex()).elements.size());
         Map<K, V> elements = slot.getElements();
         //遍历当前槽的所有元素，从槽里删除，从引导表中删除（还需要比较内容，防止哈希碰撞删除错误）
         for (Map.Entry<K, V> entry : elements.entrySet()) {

@@ -26,9 +26,9 @@ public class Tool {
         byte[] bytes = new byte[2];
         bytes[1] = (byte) (i);
         bytes[0] = (byte) (i >> 8);
-        for (byte b : bytes) {
-            System.out.println("转换字节：" + b);
-        }
+//        for (byte b : bytes) {
+//            System.out.println("转换字节：" + b);
+//        }
         return bytes;
     }
 
@@ -49,5 +49,9 @@ public class Tool {
                 GlobalConstants.REDIS_KEY.USER_LIST +
                 GlobalConstants.SYMBOL.COLON +
                 rid;
+    }
+
+    public static boolean isEmpty(Object str) {
+        return (str == null || "".equals(str));
     }
 }

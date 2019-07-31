@@ -1,9 +1,7 @@
 package com.study.signalrouter.service;
 
 import com.study.signalcommon.component.ExpirationListener;
-
-import java.io.IOException;
-import java.net.Socket;
+import com.study.signalrouter.service.SocketTransceiver;
 
 /**
  * Decription
@@ -16,11 +14,7 @@ import java.net.Socket;
 public class SocketExpirationListener<E> implements ExpirationListener<E> {
     @Override
     public void expired(E conn) {
-        Socket socket = (Socket) conn;
-        try {
-            socket.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        SocketTransceiver socketTransceiver = (SocketTransceiver) conn;
+        socketTransceiver.close();
     }
 }

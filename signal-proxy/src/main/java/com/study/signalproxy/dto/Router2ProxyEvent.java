@@ -3,7 +3,7 @@ package com.study.signalproxy.dto;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.study.signalcommon.constant.GlobalConstants;
 import com.study.signalcommon.protobuf.MessageProto;
-import com.study.signalproxy.service.ProxyServer;
+import com.study.signalproxy.ProxyServer;
 
 /**
  * Decription

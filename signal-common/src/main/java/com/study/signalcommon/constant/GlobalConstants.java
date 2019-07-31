@@ -63,5 +63,5 @@ public class GlobalConstants {
         public static final String AT = "@";
     }
 
-    public static final long HEARTBEAT_INTERVAL = 20L;
+    public static final long HEARTBEAT_INTERVAL = 20000L;
 }

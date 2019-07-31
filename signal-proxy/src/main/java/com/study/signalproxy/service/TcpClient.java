@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.io.*;
 import java.net.Socket;
+import java.text.SimpleDateFormat;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -25,12 +26,16 @@ public class TcpClient {
 
     private Socket socket;//存在多线程共用（一个读线程、多个写线程）
     private boolean isSocketAvailable() {
-        return this.socket != null
+         boolean flag = this.socket != null
                 && this.socket.isBound()
                 && !this.socket.isClosed()//需要获取closeLock
                 && this.socket.isConnected()
                 && !this.socket.isInputShutdown()
                 && !this.socket.isOutputShutdown();
+         if (!flag) {
+             System.out.println("service is not available");
+         }
+         return flag;
     }
 
     //    private Deque<Byte> readBuf = new LinkedList<>();
@@ -53,6 +58,7 @@ public class TcpClient {
 //        }
 //    }
 
+    private volatile boolean lastReadFlag;
     private volatile long lastReadTs;//多个线程共享（读线程更新、心跳（写）线程读取）
     private AtomicInteger errorCount = new AtomicInteger(0);//多个线程共享
 
@@ -66,10 +72,7 @@ public class TcpClient {
                 DataInputStream in = new DataInputStream(socket.getInputStream());
                 int index = 0;
                 if (in.available() > 0) {
-                    System.out.println("receive msg...");
-                    //收到字节，激活时间标注和时间轮
-                    TcpClient.this.lastReadTs = System.currentTimeMillis();
-                    ProxyServer.tcpClientTimeWheel.add(TcpClient.this.server + GlobalConstants.SYMBOL.AT + TcpClient.this.port, TcpClient.this);
+//                    ProxyServer.tcpClientTimeWheel.add(TcpClient.this.server + GlobalConstants.SYMBOL.AT + TcpClient.this.port, TcpClient.this);
                     if (Tool.findMagic(in.readByte(), index)
                             && Tool.findMagic(in.readByte(), index + 1)
                             && Tool.findMagic(in.readByte(), index + 2)
@@ -91,6 +94,8 @@ public class TcpClient {
                             Router2ProxyEvent event = new Router2ProxyEvent(msgid, messageProtoBuf);
                             EventQueue.getInstance().produce(event);
                         }
+                        //收到字节，激活时间标注
+                        TcpClient.this.lastReadTs = System.currentTimeMillis();
                         //收到完整消息，减少错误次数
                         if (TcpClient.this.errorCount.decrementAndGet() < 0) {//当减到0以下重置为0
                             TcpClient.this.errorCount.set(0);
@@ -114,20 +119,32 @@ public class TcpClient {
     };
     private final Runnable heartbeater = () -> {
         System.out.println("heartbeater is running...");
-        //该线程里不需要关注socket状态，因为send方法内部关注了
-        //距离上次读到数据超过阈值才发送一条心跳
-        long currentTs = System.currentTimeMillis();
-        if ((currentTs - TcpClient.this.lastReadTs) > GlobalConstants.HEARTBEAT_INTERVAL) {
-            TcpClient.this.send(GlobalConstants.MSG_ID.KEEPALIVE,
-                    PacketTransceiver.packMessage(
-                            GlobalConstants.MSG_ID.KEEPALIVE,
-                            GlobalConstants.MSG_TYPE.NOTHING,
-                            GlobalConstants.USER.HEARTBEAT,
-                            GlobalConstants.USER.HEARTBEAT));
-        } else {
-            //如果阈值范围内错误次数一道道3次以上，则直接重连
-            if (TcpClient.this.errorCount.get() > 3) {
-                TcpClient.this.reStart();
+        while (true) {
+            try {
+                Thread.sleep(5 * 1000);
+            } catch (InterruptedException e) {
+
+            }
+            //该线程里不需要关注socket状态，因为send方法内部关注了
+            //距离上次读到数据超过阈值才发送一条心跳
+            long currentTs = System.currentTimeMillis();
+            if (TcpClient.this.lastReadTs > 0) {
+                if ((currentTs - TcpClient.this.lastReadTs) > GlobalConstants.HEARTBEAT_INTERVAL) {
+                    SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss.SSSZ");
+                    System.out.println(sdf.format(currentTs) + "," + sdf.format(TcpClient.this.lastReadTs) + "," + (currentTs - TcpClient.this.lastReadTs));
+                    TcpClient.this.send(GlobalConstants.MSG_ID.KEEPALIVE,
+                            PacketTransceiver.packMessage(
+                                    GlobalConstants.MSG_ID.KEEPALIVE,
+                                    GlobalConstants.MSG_TYPE.NOTHING,
+                                    GlobalConstants.USER.HEARTBEAT,
+                                    GlobalConstants.USER.HEARTBEAT));
+                } else {
+                    //如果阈值范围内错误次数一道道3次以上，则直接重连
+                    if (TcpClient.this.errorCount.get() > 3) {
+                        TcpClient.this.reStart();
+                        System.out.println("失败次数超过3次，重连");
+                    }
+                }
             }
         }
     };
@@ -160,8 +177,8 @@ public class TcpClient {
         try {
             this.socket = new Socket(server, port);
             //如果该socket状态为isClosed、!isConnected、isInputShutdown、etc.，会抛出IOException
-//            this.in = new DataInputStream(this.socket.getInputStream());
-//            this.out = new DataOutputStream(this.socket.getOutputStream());
+//            this.in = new DataInputStream(this.service.getInputStream());
+//            this.out = new DataOutputStream(this.service.getOutputStream());
         } catch (IOException e) {//连接失败，TODO 继续尝试重连
             log.error("connect exception: {}", e.getMessage());
         }
@@ -174,7 +191,7 @@ public class TcpClient {
             //一个线程发送心跳，保活连接
             new Thread(receiver).start();
             new Thread(heartbeater).start();
-            ProxyServer.tcpClientTimeWheel.add(this.server + GlobalConstants.SYMBOL.AT + this.port, this);
+//            ProxyServer.tcpClientTimeWheel.add(this.server + GlobalConstants.SYMBOL.AT + this.port, this);
         }
     }
 
@@ -183,7 +200,7 @@ public class TcpClient {
      */
     private void close() {
         try {
-            //Closing this socket will also close the socket's inputstream and outputstream
+            //Closing this service will also close the service's inputstream and outputstream
             this.socket.close();//需要获取closeLock
         } catch (IOException e) {
             log.error("close error: {}", e.getMessage());
@@ -205,10 +222,11 @@ public class TcpClient {
                 out.write(Tool.shortToByteArray((short) bytes.length));
                 out.write(msgid);
                 out.write(bytes);
+                log.info("send msgid: {}", msgid);
             } catch (IOException e) {
                 //写异常添加错误次数，便于重连
                 this.errorCount.getAndIncrement();
-                log.error("write exception: {}", e.getMessage());
+                log.error("write data exception: {}", e.getMessage());
             }
         }
     }

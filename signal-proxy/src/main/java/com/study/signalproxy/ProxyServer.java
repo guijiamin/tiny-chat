@@ -1,16 +1,17 @@
-package com.study.signalproxy.service;
+package com.study.signalproxy;
 
 import com.study.signalcommon.component.PacketTransceiver;
 import com.study.signalcommon.component.TimeWheel;
 import com.study.signalcommon.constant.GlobalConstants;
 import com.study.signalcommon.protobuf.MessageProto;
+import com.study.signalcommon.util.Tool;
 import com.study.signalproxy.dto.Event;
 import com.study.signalproxy.dto.Proxy2RouterEvent;
+import com.study.signalproxy.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.java_websocket.WebSocket;
 import org.java_websocket.handshake.ClientHandshake;
 import org.java_websocket.server.WebSocketServer;
-import org.springframework.util.StringUtils;
 
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
@@ -28,10 +29,10 @@ import java.util.concurrent.TimeUnit;
  */
 @Slf4j
 public class ProxyServer extends WebSocketServer {
-    //    private RedisTemplate<String, String> rd = (RedisTemplate<String, String>) SpringUtil.getBean("rd");
-    public static Map<String, HashMap<String, WebSocket>> onlineMap = new ConcurrentHashMap<>();
-    private static TimeWheel<String, WebSocket> timeWheel = new TimeWheel<String, WebSocket>(1, 60, TimeUnit.SECONDS, new WebSocketExpirationListener<WebSocket>());
-    public static TimeWheel<String, TcpClient> tcpClientTimeWheel = new TimeWheel<String, TcpClient>(1, 120, TimeUnit.SECONDS, new TcpClientExpirationListener<TcpClient>());
+    public final static Map<String, HashMap<String, WebSocket>> onlineMap = new ConcurrentHashMap<>();
+    protected final static TimeWheel<String, WebSocket> webSocketTimeWheel = new TimeWheel<String, WebSocket>(1, 60, TimeUnit.SECONDS, new WebSocketExpirationListener<WebSocket>());
+    protected final static TimeWheel<String, TcpClient> tcpClientTimeWheel = new TimeWheel<String, TcpClient>(1, 120, TimeUnit.SECONDS, new TcpClientExpirationListener<TcpClient>());
+
     private TcpClient router;
 
     public ProxyServer() {
@@ -46,9 +47,7 @@ public class ProxyServer extends WebSocketServer {
     public void onStart() {
         log.info("ProxyServer started successfully");
         //心跳时间轮
-//        this.timeWheel = new TimeWheel<String, WebSocket>(1, 60, TimeUnit.SECONDS);
-//        this.timeWheel.addExpirationListener(new WebSocketExpirationListener<WebSocket>());
-//        this.timeWheel.start();
+//        webSocketTimeWheel.start();
         tcpClientTimeWheel.start();
         //建立proxy到router的tcp连接（包括接收router消息线程和定时发送心跳线程）
         this.router = new TcpClient("127.0.0.1", GlobalConstants.SERVER_PORT.ROUTER);
@@ -83,7 +82,7 @@ public class ProxyServer extends WebSocketServer {
             onlineMap.put(rid, userConnMap);
         }
         //添加到心跳时间轮
-//        this.timeWheel.add(rid + GlobalConstants.SYMBOL.SMILE + uid, conn);
+//        webSocketTimeWheel.add(rid + GlobalConstants.SYMBOL.AT + uid, conn);
         System.out.println("当前房间个数:" + onlineMap.size());
     }
 
@@ -104,11 +103,13 @@ public class ProxyServer extends WebSocketServer {
         if (!onlineMap.get(rid).containsKey(uid)) {
             return;
         }
+        //从时间轮里移除当前用户
+//        webSocketTimeWheel.remove(rid + GlobalConstants.SYMBOL.AT + uid);
 
         //对于当前房间其它用户，需要发送广播消息
         for (Map.Entry<String, WebSocket> entry : onlineMap.get(rid).entrySet()) {
             if (!entry.getKey().equals(uid)) {
-                //TODO 发送203/2消息给router
+                //TODO 发送103/2消息给router
             }
         }
         if (onlineMap.get(rid).containsKey(uid)) {
@@ -121,28 +122,28 @@ public class ProxyServer extends WebSocketServer {
 
     @Override
     public void onMessage(WebSocket conn, String message) {
-        System.out.println("!!!!!!");
+        log.info("receive string msg: {} from: {}", message, conn.getRemoteSocketAddress());
     }
 
     @Override
     public void onMessage(WebSocket conn, ByteBuffer message) {
         MessageProto.Msg msg = PacketTransceiver.parseMessage(message.array());
-        log.info("Receive msg: {} from: {}", msg, conn.getRemoteSocketAddress());
+        log.info("receive byte msg: {} from: {}", msg, conn.getRemoteSocketAddress());
 
         if (msg == null) return;
 
         int msgid = msg.getMsgid();
         String frid = msg.getFuser().getRid();
         String fuid = msg.getFuser().getUid();
-        if (StringUtils.isEmpty(msgid) || StringUtils.isEmpty(frid) || StringUtils.isEmpty(fuid)) {
-            log.warn("Unvalid message");
+        if (Tool.isEmpty(msgid) || Tool.isEmpty(frid) || Tool.isEmpty(fuid)) {
+            log.warn("unvalid message");
             return;
         }
         if (msgid == GlobalConstants.MSG_ID.KEEPALIVE) {//收到客户端心跳消息
             //1、回应
             conn.send(PacketTransceiver.packMessage(GlobalConstants.MSG_ID.KEEPALIVE, GlobalConstants.MSG_TYPE.ENTER, msg.getFuser(), msg.getTuser()));
             //2、激活时间轮
-//            timeWheel.add(frid + GlobalConstants.SYMBOL.SMILE + fuid, conn);
+//            webSocketTimeWheel.add(frid + GlobalConstants.SYMBOL.AT + fuid, conn);
         } else {//收到客户端除心跳以外消息
             //1、使用指定的router生成事件（为便于选择不同的router发送）
             System.out.println("生产消息事件：msgid=" + msgid);
@@ -154,7 +155,7 @@ public class ProxyServer extends WebSocketServer {
 
     @Override
     public void onError(WebSocket conn, Exception ex) {
-        log.error("An error occured on connection " + conn.getRemoteSocketAddress() + ":" + conn.getResourceDescriptor() + ", ex: " + ex);
+        log.error("an error occured on conn " + conn.getRemoteSocketAddress() + ":" + conn.getResourceDescriptor() + ", ex: " + ex);
     }
 
     private Map<String, String> parse(String req) {
