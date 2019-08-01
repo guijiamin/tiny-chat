@@ -30,8 +30,8 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class ProxyServer extends WebSocketServer {
     public final static Map<String, HashMap<String, WebSocket>> onlineMap = new ConcurrentHashMap<>();
-    protected final static TimeWheel<String, WebSocket> webSocketTimeWheel = new TimeWheel<String, WebSocket>(1, 60, TimeUnit.SECONDS, new WebSocketExpirationListener<WebSocket>());
-    protected final static TimeWheel<String, TcpClient> tcpClientTimeWheel = new TimeWheel<String, TcpClient>(1, 120, TimeUnit.SECONDS, new TcpClientExpirationListener<TcpClient>());
+    public final static TimeWheel<String, WebSocket> webSocketTimeWheel = new TimeWheel<String, WebSocket>(1, 60, TimeUnit.SECONDS, new WebSocketExpirationListener<WebSocket>());
+    public final static TimeWheel<String, TcpClient> tcpClientTimeWheel = new TimeWheel<String, TcpClient>(1, 120, TimeUnit.SECONDS, new TcpClientExpirationListener<TcpClient>());
 
     private TcpClient router;
 
@@ -46,12 +46,11 @@ public class ProxyServer extends WebSocketServer {
     @Override
     public void onStart() {
         log.info("ProxyServer started successfully");
-        //心跳时间轮
-//        webSocketTimeWheel.start();
-        tcpClientTimeWheel.start();
+
+        webSocketTimeWheel.start();//与客户端心跳时间轮
+        tcpClientTimeWheel.start();//与中心心跳时间轮
         //建立proxy到router的tcp连接（包括接收router消息线程和定时发送心跳线程）
-        this.router = new TcpClient("127.0.0.1", GlobalConstants.SERVER_PORT.ROUTER);
-        this.router.start();
+        new TcpClient("127.0.0.1", GlobalConstants.SERVER_PORT.ROUTER).start();
         //开启线程消费事件消息
         new Thread(new EventConsumer()).start();
     }
@@ -82,7 +81,7 @@ public class ProxyServer extends WebSocketServer {
             onlineMap.put(rid, userConnMap);
         }
         //添加到心跳时间轮
-//        webSocketTimeWheel.add(rid + GlobalConstants.SYMBOL.AT + uid, conn);
+        webSocketTimeWheel.add(rid + GlobalConstants.SYMBOL.AT + uid, conn);
         System.out.println("当前房间个数:" + onlineMap.size());
     }
 
@@ -104,14 +103,14 @@ public class ProxyServer extends WebSocketServer {
             return;
         }
         //从时间轮里移除当前用户
-//        webSocketTimeWheel.remove(rid + GlobalConstants.SYMBOL.AT + uid);
+        webSocketTimeWheel.remove(rid + GlobalConstants.SYMBOL.AT + uid);
 
         //对于当前房间其它用户，需要发送广播消息
-        for (Map.Entry<String, WebSocket> entry : onlineMap.get(rid).entrySet()) {
-            if (!entry.getKey().equals(uid)) {
-                //TODO 发送103/2消息给router
-            }
-        }
+        MessageProto.User user = PacketTransceiver.generateUser(rid, uid, "", "");
+        byte[] bytes = PacketTransceiver.packMessage(GlobalConstants.MSG_ID.BROADCAST, GlobalConstants.MSG_TYPE.LEAVE, user, user);
+        Event event = new Proxy2RouterEvent(this.router, GlobalConstants.MSG_ID.BROADCAST, bytes);
+        EventQueue.getInstance().produce(event);
+
         if (onlineMap.get(rid).containsKey(uid)) {
             onlineMap.get(rid).remove(uid);
             if (onlineMap.get(rid).size() == 0) {//如果删除后当前房间没有用户，将当前房间列表删除
@@ -139,11 +138,10 @@ public class ProxyServer extends WebSocketServer {
             log.warn("unvalid message");
             return;
         }
+        //收到有效消息则激活时间轮
+        webSocketTimeWheel.add(frid + GlobalConstants.SYMBOL.AT + fuid, conn);
         if (msgid == GlobalConstants.MSG_ID.KEEPALIVE) {//收到客户端心跳消息
-            //1、回应
-            conn.send(PacketTransceiver.packMessage(GlobalConstants.MSG_ID.KEEPALIVE, GlobalConstants.MSG_TYPE.ENTER, msg.getFuser(), msg.getTuser()));
-            //2、激活时间轮
-//            webSocketTimeWheel.add(frid + GlobalConstants.SYMBOL.AT + fuid, conn);
+            conn.send(message);//原封不动回应
         } else {//收到客户端除心跳以外消息
             //1、使用指定的router生成事件（为便于选择不同的router发送）
             System.out.println("生产消息事件：msgid=" + msgid);

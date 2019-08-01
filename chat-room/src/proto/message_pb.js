@@ -86,7 +86,8 @@ proto.Msg.prototype.toObject = function(opt_includeInstance) {
 proto.Msg.toObject = function(includeInstance, msg) {
   var f, obj = {
     msgid: jspb.Message.getFieldWithDefault(msg, 1, 0),
-    msgtype: jspb.Message.getFieldWithDefault(msg, 2, 0),
+    srcmsgid: jspb.Message.getFieldWithDefault(msg, 2, 0),
+    msgtype: jspb.Message.getFieldWithDefault(msg, 3, 0),
     fuser: (f = msg.getFuser()) && proto.User.toObject(includeInstance, f),
     tuser: (f = msg.getTuser()) && proto.User.toObject(includeInstance, f),
     extendMap: (f = msg.getExtendMap()) ? f.toObject(includeInstance, undefined) : []
@@ -132,19 +133,23 @@ proto.Msg.deserializeBinaryFromReader = function(msg, reader) {
       break;
     case 2:
       var value = /** @type {number} */ (reader.readUint32());
-      msg.setMsgtype(value);
+      msg.setSrcmsgid(value);
       break;
     case 3:
-      var value = new proto.User;
-      reader.readMessage(value,proto.User.deserializeBinaryFromReader);
-      msg.setFuser(value);
+      var value = /** @type {number} */ (reader.readUint32());
+      msg.setMsgtype(value);
       break;
     case 4:
       var value = new proto.User;
       reader.readMessage(value,proto.User.deserializeBinaryFromReader);
-      msg.setTuser(value);
+      msg.setFuser(value);
       break;
     case 5:
+      var value = new proto.User;
+      reader.readMessage(value,proto.User.deserializeBinaryFromReader);
+      msg.setTuser(value);
+      break;
+    case 6:
       var value = msg.getExtendMap();
       reader.readMessage(value, function(message, reader) {
         jspb.Map.deserializeBinary(message, reader, jspb.BinaryReader.prototype.readString, jspb.BinaryReader.prototype.readString, null, "");
@@ -186,22 +191,21 @@ proto.Msg.serializeBinaryToWriter = function(message, writer) {
       f
     );
   }
-  f = message.getMsgtype();
+  f = message.getSrcmsgid();
   if (f !== 0) {
     writer.writeUint32(
       2,
       f
     );
   }
-  f = message.getFuser();
-  if (f != null) {
-    writer.writeMessage(
+  f = message.getMsgtype();
+  if (f !== 0) {
+    writer.writeUint32(
       3,
-      f,
-      proto.User.serializeBinaryToWriter
+      f
     );
   }
-  f = message.getTuser();
+  f = message.getFuser();
   if (f != null) {
     writer.writeMessage(
       4,
@@ -209,9 +213,17 @@ proto.Msg.serializeBinaryToWriter = function(message, writer) {
       proto.User.serializeBinaryToWriter
     );
   }
+  f = message.getTuser();
+  if (f != null) {
+    writer.writeMessage(
+      5,
+      f,
+      proto.User.serializeBinaryToWriter
+    );
+  }
   f = message.getExtendMap(true);
   if (f && f.getLength() > 0) {
-    f.serializeBinary(5, writer, jspb.BinaryWriter.prototype.writeString, jspb.BinaryWriter.prototype.writeString);
+    f.serializeBinary(6, writer, jspb.BinaryWriter.prototype.writeString, jspb.BinaryWriter.prototype.writeString);
   }
 };
 
@@ -232,33 +244,48 @@ proto.Msg.prototype.setMsgid = function(value) {
 
 
 /**
- * optional uint32 msgtype = 2;
+ * optional uint32 srcmsgid = 2;
  * @return {number}
  */
-proto.Msg.prototype.getMsgtype = function() {
+proto.Msg.prototype.getSrcmsgid = function() {
   return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 2, 0));
 };
 
 
 /** @param {number} value */
-proto.Msg.prototype.setMsgtype = function(value) {
+proto.Msg.prototype.setSrcmsgid = function(value) {
   jspb.Message.setProto3IntField(this, 2, value);
 };
 
 
 /**
- * optional User fuser = 3;
+ * optional uint32 msgtype = 3;
+ * @return {number}
+ */
+proto.Msg.prototype.getMsgtype = function() {
+  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 3, 0));
+};
+
+
+/** @param {number} value */
+proto.Msg.prototype.setMsgtype = function(value) {
+  jspb.Message.setProto3IntField(this, 3, value);
+};
+
+
+/**
+ * optional User fuser = 4;
  * @return {?proto.User}
  */
 proto.Msg.prototype.getFuser = function() {
   return /** @type{?proto.User} */ (
-    jspb.Message.getWrapperField(this, proto.User, 3));
+    jspb.Message.getWrapperField(this, proto.User, 4));
 };
 
 
 /** @param {?proto.User|undefined} value */
 proto.Msg.prototype.setFuser = function(value) {
-  jspb.Message.setWrapperField(this, 3, value);
+  jspb.Message.setWrapperField(this, 4, value);
 };
 
 
@@ -275,23 +302,23 @@ proto.Msg.prototype.clearFuser = function() {
  * @return {boolean}
  */
 proto.Msg.prototype.hasFuser = function() {
-  return jspb.Message.getField(this, 3) != null;
+  return jspb.Message.getField(this, 4) != null;
 };
 
 
 /**
- * optional User tuser = 4;
+ * optional User tuser = 5;
  * @return {?proto.User}
  */
 proto.Msg.prototype.getTuser = function() {
   return /** @type{?proto.User} */ (
-    jspb.Message.getWrapperField(this, proto.User, 4));
+    jspb.Message.getWrapperField(this, proto.User, 5));
 };
 
 
 /** @param {?proto.User|undefined} value */
 proto.Msg.prototype.setTuser = function(value) {
-  jspb.Message.setWrapperField(this, 4, value);
+  jspb.Message.setWrapperField(this, 5, value);
 };
 
 
@@ -308,19 +335,19 @@ proto.Msg.prototype.clearTuser = function() {
  * @return {boolean}
  */
 proto.Msg.prototype.hasTuser = function() {
-  return jspb.Message.getField(this, 4) != null;
+  return jspb.Message.getField(this, 5) != null;
 };
 
 
 /**
- * map<string, string> extend = 5;
+ * map<string, string> extend = 6;
  * @param {boolean=} opt_noLazyCreate Do not create the map if
  * empty, instead returning `undefined`
  * @return {!jspb.Map<string,string>}
  */
 proto.Msg.prototype.getExtendMap = function(opt_noLazyCreate) {
   return /** @type {!jspb.Map<string,string>} */ (
-      jspb.Message.getMapField(this, 5, opt_noLazyCreate,
+      jspb.Message.getMapField(this, 6, opt_noLazyCreate,
       null));
 };
 

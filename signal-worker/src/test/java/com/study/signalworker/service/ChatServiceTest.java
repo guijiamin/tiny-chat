@@ -14,8 +14,6 @@ import org.springframework.test.context.web.WebAppConfiguration;
 
 import javax.annotation.Resource;
 
-import static org.junit.Assert.*;
-
 /**
  * Decription
  * <p>
@@ -37,7 +35,7 @@ public class ChatServiceTest {
     }
 
     @Resource
-    private ChatService chatService;
+    private BroadcastService chatService;
 
     @Test
     public void chat() throws Exception {

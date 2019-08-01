@@ -5,10 +5,11 @@ option java_outer_classname = "MessageProto";
 
 message Msg {
     uint32 msgid = 1;
-    uint32 msgtype = 2;
-    User fuser = 3;
-    User tuser = 4;
-    map<string, string> extend = 5;
+    uint32 srcmsgid = 2;
+    uint32 msgtype = 3;
+    User fuser = 4;
+    User tuser = 5;
+    map<string, string> extend = 6;
 }
 
 message User {

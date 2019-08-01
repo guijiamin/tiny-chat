@@ -24,42 +24,47 @@ public final class MessageProto {
     int getMsgid();
 
     /**
-     * <code>uint32 msgtype = 2;</code>
+     * <code>uint32 srcmsgid = 2;</code>
+     */
+    int getSrcmsgid();
+
+    /**
+     * <code>uint32 msgtype = 3;</code>
      */
     int getMsgtype();
 
     /**
-     * <code>.User fuser = 3;</code>
+     * <code>.User fuser = 4;</code>
      */
     boolean hasFuser();
     /**
-     * <code>.User fuser = 3;</code>
+     * <code>.User fuser = 4;</code>
      */
     com.study.signalcommon.protobuf.MessageProto.User getFuser();
     /**
-     * <code>.User fuser = 3;</code>
+     * <code>.User fuser = 4;</code>
      */
     com.study.signalcommon.protobuf.MessageProto.UserOrBuilder getFuserOrBuilder();
 
     /**
-     * <code>.User tuser = 4;</code>
+     * <code>.User tuser = 5;</code>
      */
     boolean hasTuser();
     /**
-     * <code>.User tuser = 4;</code>
+     * <code>.User tuser = 5;</code>
      */
     com.study.signalcommon.protobuf.MessageProto.User getTuser();
     /**
-     * <code>.User tuser = 4;</code>
+     * <code>.User tuser = 5;</code>
      */
     com.study.signalcommon.protobuf.MessageProto.UserOrBuilder getTuserOrBuilder();
 
     /**
-     * <code>map&lt;string, string&gt; extend = 5;</code>
+     * <code>map&lt;string, string&gt; extend = 6;</code>
      */
     int getExtendCount();
     /**
-     * <code>map&lt;string, string&gt; extend = 5;</code>
+     * <code>map&lt;string, string&gt; extend = 6;</code>
      */
     boolean containsExtend(
         java.lang.String key);
@@ -70,19 +75,19 @@ public final class MessageProto {
     java.util.Map<java.lang.String, java.lang.String>
     getExtend();
     /**
-     * <code>map&lt;string, string&gt; extend = 5;</code>
+     * <code>map&lt;string, string&gt; extend = 6;</code>
      */
     java.util.Map<java.lang.String, java.lang.String>
     getExtendMap();
     /**
-     * <code>map&lt;string, string&gt; extend = 5;</code>
+     * <code>map&lt;string, string&gt; extend = 6;</code>
      */
 
     java.lang.String getExtendOrDefault(
         java.lang.String key,
         java.lang.String defaultValue);
     /**
-     * <code>map&lt;string, string&gt; extend = 5;</code>
+     * <code>map&lt;string, string&gt; extend = 6;</code>
      */
 
     java.lang.String getExtendOrThrow(
@@ -134,10 +139,15 @@ public final class MessageProto {
             }
             case 16: {
 
+              srcmsgid_ = input.readUInt32();
+              break;
+            }
+            case 24: {
+
               msgtype_ = input.readUInt32();
               break;
             }
-            case 26: {
+            case 34: {
               com.study.signalcommon.protobuf.MessageProto.User.Builder subBuilder = null;
               if (fuser_ != null) {
                 subBuilder = fuser_.toBuilder();
@@ -150,7 +160,7 @@ public final class MessageProto {
 
               break;
             }
-            case 34: {
+            case 42: {
               com.study.signalcommon.protobuf.MessageProto.User.Builder subBuilder = null;
               if (tuser_ != null) {
                 subBuilder = tuser_.toBuilder();
@@ -163,11 +173,11 @@ public final class MessageProto {
 
               break;
             }
-            case 42: {
-              if (!((mutable_bitField0_ & 0x00000010) != 0)) {
+            case 50: {
+              if (!((mutable_bitField0_ & 0x00000020) != 0)) {
                 extend_ = com.google.protobuf.MapField.newMapField(
                     ExtendDefaultEntryHolder.defaultEntry);
-                mutable_bitField0_ |= 0x00000010;
+                mutable_bitField0_ |= 0x00000020;
               }
               com.google.protobuf.MapEntry<java.lang.String, java.lang.String>
               extend__ = input.readMessage(
@@ -205,7 +215,7 @@ public final class MessageProto {
     protected com.google.protobuf.MapField internalGetMapField(
         int number) {
       switch (number) {
-        case 5:
+        case 6:
           return internalGetExtend();
         default:
           throw new RuntimeException(
@@ -230,58 +240,67 @@ public final class MessageProto {
       return msgid_;
     }
 
-    public static final int MSGTYPE_FIELD_NUMBER = 2;
+    public static final int SRCMSGID_FIELD_NUMBER = 2;
+    private int srcmsgid_;
+    /**
+     * <code>uint32 srcmsgid = 2;</code>
+     */
+    public int getSrcmsgid() {
+      return srcmsgid_;
+    }
+
+    public static final int MSGTYPE_FIELD_NUMBER = 3;
     private int msgtype_;
     /**
-     * <code>uint32 msgtype = 2;</code>
+     * <code>uint32 msgtype = 3;</code>
      */
     public int getMsgtype() {
       return msgtype_;
     }
 
-    public static final int FUSER_FIELD_NUMBER = 3;
+    public static final int FUSER_FIELD_NUMBER = 4;
     private com.study.signalcommon.protobuf.MessageProto.User fuser_;
     /**
-     * <code>.User fuser = 3;</code>
+     * <code>.User fuser = 4;</code>
      */
     public boolean hasFuser() {
       return fuser_ != null;
     }
     /**
-     * <code>.User fuser = 3;</code>
+     * <code>.User fuser = 4;</code>
      */
     public com.study.signalcommon.protobuf.MessageProto.User getFuser() {
       return fuser_ == null ? com.study.signalcommon.protobuf.MessageProto.User.getDefaultInstance() : fuser_;
     }
     /**
-     * <code>.User fuser = 3;</code>
+     * <code>.User fuser = 4;</code>
      */
     public com.study.signalcommon.protobuf.MessageProto.UserOrBuilder getFuserOrBuilder() {
       return getFuser();
     }
 
-    public static final int TUSER_FIELD_NUMBER = 4;
+    public static final int TUSER_FIELD_NUMBER = 5;
     private com.study.signalcommon.protobuf.MessageProto.User tuser_;
     /**
-     * <code>.User tuser = 4;</code>
+     * <code>.User tuser = 5;</code>
      */
     public boolean hasTuser() {
       return tuser_ != null;
     }
     /**
-     * <code>.User tuser = 4;</code>
+     * <code>.User tuser = 5;</code>
      */
     public com.study.signalcommon.protobuf.MessageProto.User getTuser() {
       return tuser_ == null ? com.study.signalcommon.protobuf.MessageProto.User.getDefaultInstance() : tuser_;
     }
     /**
-     * <code>.User tuser = 4;</code>
+     * <code>.User tuser = 5;</code>
      */
     public com.study.signalcommon.protobuf.MessageProto.UserOrBuilder getTuserOrBuilder() {
       return getTuser();
     }
 
-    public static final int EXTEND_FIELD_NUMBER = 5;
+    public static final int EXTEND_FIELD_NUMBER = 6;
     private static final class ExtendDefaultEntryHolder {
       static final com.google.protobuf.MapEntry<
           java.lang.String, java.lang.String> defaultEntry =
@@ -308,7 +327,7 @@ public final class MessageProto {
       return internalGetExtend().getMap().size();
     }
     /**
-     * <code>map&lt;string, string&gt; extend = 5;</code>
+     * <code>map&lt;string, string&gt; extend = 6;</code>
      */
 
     public boolean containsExtend(
@@ -324,14 +343,14 @@ public final class MessageProto {
       return getExtendMap();
     }
     /**
-     * <code>map&lt;string, string&gt; extend = 5;</code>
+     * <code>map&lt;string, string&gt; extend = 6;</code>
      */
 
     public java.util.Map<java.lang.String, java.lang.String> getExtendMap() {
       return internalGetExtend().getMap();
     }
     /**
-     * <code>map&lt;string, string&gt; extend = 5;</code>
+     * <code>map&lt;string, string&gt; extend = 6;</code>
      */
 
     public java.lang.String getExtendOrDefault(
@@ -343,7 +362,7 @@ public final class MessageProto {
       return map.containsKey(key) ? map.get(key) : defaultValue;
     }
     /**
-     * <code>map&lt;string, string&gt; extend = 5;</code>
+     * <code>map&lt;string, string&gt; extend = 6;</code>
      */
 
     public java.lang.String getExtendOrThrow(
@@ -374,21 +393,24 @@ public final class MessageProto {
       if (msgid_ != 0) {
         output.writeUInt32(1, msgid_);
       }
+      if (srcmsgid_ != 0) {
+        output.writeUInt32(2, srcmsgid_);
+      }
       if (msgtype_ != 0) {
-        output.writeUInt32(2, msgtype_);
+        output.writeUInt32(3, msgtype_);
       }
       if (fuser_ != null) {
-        output.writeMessage(3, getFuser());
+        output.writeMessage(4, getFuser());
       }
       if (tuser_ != null) {
-        output.writeMessage(4, getTuser());
+        output.writeMessage(5, getTuser());
       }
       com.google.protobuf.GeneratedMessageV3
         .serializeStringMapTo(
           output,
           internalGetExtend(),
           ExtendDefaultEntryHolder.defaultEntry,
-          5);
+          6);
       unknownFields.writeTo(output);
     }
 
@@ -402,17 +424,21 @@ public final class MessageProto {
         size += com.google.protobuf.CodedOutputStream
           .computeUInt32Size(1, msgid_);
       }
+      if (srcmsgid_ != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeUInt32Size(2, srcmsgid_);
+      }
       if (msgtype_ != 0) {
         size += com.google.protobuf.CodedOutputStream
-          .computeUInt32Size(2, msgtype_);
+          .computeUInt32Size(3, msgtype_);
       }
       if (fuser_ != null) {
         size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(3, getFuser());
+          .computeMessageSize(4, getFuser());
       }
       if (tuser_ != null) {
         size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(4, getTuser());
+          .computeMessageSize(5, getTuser());
       }
       for (java.util.Map.Entry<java.lang.String, java.lang.String> entry
            : internalGetExtend().getMap().entrySet()) {
@@ -422,7 +448,7 @@ public final class MessageProto {
             .setValue(entry.getValue())
             .build();
         size += com.google.protobuf.CodedOutputStream
-            .computeMessageSize(5, extend__);
+            .computeMessageSize(6, extend__);
       }
       size += unknownFields.getSerializedSize();
       memoizedSize = size;
@@ -441,6 +467,8 @@ public final class MessageProto {
 
       if (getMsgid()
           != other.getMsgid()) return false;
+      if (getSrcmsgid()
+          != other.getSrcmsgid()) return false;
       if (getMsgtype()
           != other.getMsgtype()) return false;
       if (hasFuser() != other.hasFuser()) return false;
@@ -468,6 +496,8 @@ public final class MessageProto {
       hash = (19 * hash) + getDescriptor().hashCode();
       hash = (37 * hash) + MSGID_FIELD_NUMBER;
       hash = (53 * hash) + getMsgid();
+      hash = (37 * hash) + SRCMSGID_FIELD_NUMBER;
+      hash = (53 * hash) + getSrcmsgid();
       hash = (37 * hash) + MSGTYPE_FIELD_NUMBER;
       hash = (53 * hash) + getMsgtype();
       if (hasFuser()) {
@@ -593,7 +623,7 @@ public final class MessageProto {
       protected com.google.protobuf.MapField internalGetMapField(
           int number) {
         switch (number) {
-          case 5:
+          case 6:
             return internalGetExtend();
           default:
             throw new RuntimeException(
@@ -604,7 +634,7 @@ public final class MessageProto {
       protected com.google.protobuf.MapField internalGetMutableMapField(
           int number) {
         switch (number) {
-          case 5:
+          case 6:
             return internalGetMutableExtend();
           default:
             throw new RuntimeException(
@@ -638,6 +668,8 @@ public final class MessageProto {
       public Builder clear() {
         super.clear();
         msgid_ = 0;
+
+        srcmsgid_ = 0;
 
         msgtype_ = 0;
 
@@ -683,6 +715,7 @@ public final class MessageProto {
         int from_bitField0_ = bitField0_;
         int to_bitField0_ = 0;
         result.msgid_ = msgid_;
+        result.srcmsgid_ = srcmsgid_;
         result.msgtype_ = msgtype_;
         if (fuserBuilder_ == null) {
           result.fuser_ = fuser_;
@@ -747,6 +780,9 @@ public final class MessageProto {
         if (other == com.study.signalcommon.protobuf.MessageProto.Msg.getDefaultInstance()) return this;
         if (other.getMsgid() != 0) {
           setMsgid(other.getMsgid());
+        }
+        if (other.getSrcmsgid() != 0) {
+          setSrcmsgid(other.getSrcmsgid());
         }
         if (other.getMsgtype() != 0) {
           setMsgtype(other.getMsgtype());
@@ -815,15 +851,41 @@ public final class MessageProto {
         return this;
       }
 
+      private int srcmsgid_ ;
+      /**
+       * <code>uint32 srcmsgid = 2;</code>
+       */
+      public int getSrcmsgid() {
+        return srcmsgid_;
+      }
+      /**
+       * <code>uint32 srcmsgid = 2;</code>
+       */
+      public Builder setSrcmsgid(int value) {
+        
+        srcmsgid_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>uint32 srcmsgid = 2;</code>
+       */
+      public Builder clearSrcmsgid() {
+        
+        srcmsgid_ = 0;
+        onChanged();
+        return this;
+      }
+
       private int msgtype_ ;
       /**
-       * <code>uint32 msgtype = 2;</code>
+       * <code>uint32 msgtype = 3;</code>
        */
       public int getMsgtype() {
         return msgtype_;
       }
       /**
-       * <code>uint32 msgtype = 2;</code>
+       * <code>uint32 msgtype = 3;</code>
        */
       public Builder setMsgtype(int value) {
         
@@ -832,7 +894,7 @@ public final class MessageProto {
         return this;
       }
       /**
-       * <code>uint32 msgtype = 2;</code>
+       * <code>uint32 msgtype = 3;</code>
        */
       public Builder clearMsgtype() {
         
@@ -845,13 +907,13 @@ public final class MessageProto {
       private com.google.protobuf.SingleFieldBuilderV3<
           com.study.signalcommon.protobuf.MessageProto.User, com.study.signalcommon.protobuf.MessageProto.User.Builder, com.study.signalcommon.protobuf.MessageProto.UserOrBuilder> fuserBuilder_;
       /**
-       * <code>.User fuser = 3;</code>
+       * <code>.User fuser = 4;</code>
        */
       public boolean hasFuser() {
         return fuserBuilder_ != null || fuser_ != null;
       }
       /**
-       * <code>.User fuser = 3;</code>
+       * <code>.User fuser = 4;</code>
        */
       public com.study.signalcommon.protobuf.MessageProto.User getFuser() {
         if (fuserBuilder_ == null) {
@@ -861,7 +923,7 @@ public final class MessageProto {
         }
       }
       /**
-       * <code>.User fuser = 3;</code>
+       * <code>.User fuser = 4;</code>
        */
       public Builder setFuser(com.study.signalcommon.protobuf.MessageProto.User value) {
         if (fuserBuilder_ == null) {
@@ -877,7 +939,7 @@ public final class MessageProto {
         return this;
       }
       /**
-       * <code>.User fuser = 3;</code>
+       * <code>.User fuser = 4;</code>
        */
       public Builder setFuser(
           com.study.signalcommon.protobuf.MessageProto.User.Builder builderForValue) {
@@ -891,7 +953,7 @@ public final class MessageProto {
         return this;
       }
       /**
-       * <code>.User fuser = 3;</code>
+       * <code>.User fuser = 4;</code>
        */
       public Builder mergeFuser(com.study.signalcommon.protobuf.MessageProto.User value) {
         if (fuserBuilder_ == null) {
@@ -909,7 +971,7 @@ public final class MessageProto {
         return this;
       }
       /**
-       * <code>.User fuser = 3;</code>
+       * <code>.User fuser = 4;</code>
        */
       public Builder clearFuser() {
         if (fuserBuilder_ == null) {
@@ -923,7 +985,7 @@ public final class MessageProto {
         return this;
       }
       /**
-       * <code>.User fuser = 3;</code>
+       * <code>.User fuser = 4;</code>
        */
       public com.study.signalcommon.protobuf.MessageProto.User.Builder getFuserBuilder() {
         
@@ -931,7 +993,7 @@ public final class MessageProto {
         return getFuserFieldBuilder().getBuilder();
       }
       /**
-       * <code>.User fuser = 3;</code>
+       * <code>.User fuser = 4;</code>
        */
       public com.study.signalcommon.protobuf.MessageProto.UserOrBuilder getFuserOrBuilder() {
         if (fuserBuilder_ != null) {
@@ -942,7 +1004,7 @@ public final class MessageProto {
         }
       }
       /**
-       * <code>.User fuser = 3;</code>
+       * <code>.User fuser = 4;</code>
        */
       private com.google.protobuf.SingleFieldBuilderV3<
           com.study.signalcommon.protobuf.MessageProto.User, com.study.signalcommon.protobuf.MessageProto.User.Builder, com.study.signalcommon.protobuf.MessageProto.UserOrBuilder> 
@@ -962,13 +1024,13 @@ public final class MessageProto {
       private com.google.protobuf.SingleFieldBuilderV3<
           com.study.signalcommon.protobuf.MessageProto.User, com.study.signalcommon.protobuf.MessageProto.User.Builder, com.study.signalcommon.protobuf.MessageProto.UserOrBuilder> tuserBuilder_;
       /**
-       * <code>.User tuser = 4;</code>
+       * <code>.User tuser = 5;</code>
        */
       public boolean hasTuser() {
         return tuserBuilder_ != null || tuser_ != null;
       }
       /**
-       * <code>.User tuser = 4;</code>
+       * <code>.User tuser = 5;</code>
        */
       public com.study.signalcommon.protobuf.MessageProto.User getTuser() {
         if (tuserBuilder_ == null) {
@@ -978,7 +1040,7 @@ public final class MessageProto {
         }
       }
       /**
-       * <code>.User tuser = 4;</code>
+       * <code>.User tuser = 5;</code>
        */
       public Builder setTuser(com.study.signalcommon.protobuf.MessageProto.User value) {
         if (tuserBuilder_ == null) {
@@ -994,7 +1056,7 @@ public final class MessageProto {
         return this;
       }
       /**
-       * <code>.User tuser = 4;</code>
+       * <code>.User tuser = 5;</code>
        */
       public Builder setTuser(
           com.study.signalcommon.protobuf.MessageProto.User.Builder builderForValue) {
@@ -1008,7 +1070,7 @@ public final class MessageProto {
         return this;
       }
       /**
-       * <code>.User tuser = 4;</code>
+       * <code>.User tuser = 5;</code>
        */
       public Builder mergeTuser(com.study.signalcommon.protobuf.MessageProto.User value) {
         if (tuserBuilder_ == null) {
@@ -1026,7 +1088,7 @@ public final class MessageProto {
         return this;
       }
       /**
-       * <code>.User tuser = 4;</code>
+       * <code>.User tuser = 5;</code>
        */
       public Builder clearTuser() {
         if (tuserBuilder_ == null) {
@@ -1040,7 +1102,7 @@ public final class MessageProto {
         return this;
       }
       /**
-       * <code>.User tuser = 4;</code>
+       * <code>.User tuser = 5;</code>
        */
       public com.study.signalcommon.protobuf.MessageProto.User.Builder getTuserBuilder() {
         
@@ -1048,7 +1110,7 @@ public final class MessageProto {
         return getTuserFieldBuilder().getBuilder();
       }
       /**
-       * <code>.User tuser = 4;</code>
+       * <code>.User tuser = 5;</code>
        */
       public com.study.signalcommon.protobuf.MessageProto.UserOrBuilder getTuserOrBuilder() {
         if (tuserBuilder_ != null) {
@@ -1059,7 +1121,7 @@ public final class MessageProto {
         }
       }
       /**
-       * <code>.User tuser = 4;</code>
+       * <code>.User tuser = 5;</code>
        */
       private com.google.protobuf.SingleFieldBuilderV3<
           com.study.signalcommon.protobuf.MessageProto.User, com.study.signalcommon.protobuf.MessageProto.User.Builder, com.study.signalcommon.protobuf.MessageProto.UserOrBuilder> 
@@ -1102,7 +1164,7 @@ public final class MessageProto {
         return internalGetExtend().getMap().size();
       }
       /**
-       * <code>map&lt;string, string&gt; extend = 5;</code>
+       * <code>map&lt;string, string&gt; extend = 6;</code>
        */
 
       public boolean containsExtend(
@@ -1118,14 +1180,14 @@ public final class MessageProto {
         return getExtendMap();
       }
       /**
-       * <code>map&lt;string, string&gt; extend = 5;</code>
+       * <code>map&lt;string, string&gt; extend = 6;</code>
        */
 
       public java.util.Map<java.lang.String, java.lang.String> getExtendMap() {
         return internalGetExtend().getMap();
       }
       /**
-       * <code>map&lt;string, string&gt; extend = 5;</code>
+       * <code>map&lt;string, string&gt; extend = 6;</code>
        */
 
       public java.lang.String getExtendOrDefault(
@@ -1137,7 +1199,7 @@ public final class MessageProto {
         return map.containsKey(key) ? map.get(key) : defaultValue;
       }
       /**
-       * <code>map&lt;string, string&gt; extend = 5;</code>
+       * <code>map&lt;string, string&gt; extend = 6;</code>
        */
 
       public java.lang.String getExtendOrThrow(
@@ -1157,7 +1219,7 @@ public final class MessageProto {
         return this;
       }
       /**
-       * <code>map&lt;string, string&gt; extend = 5;</code>
+       * <code>map&lt;string, string&gt; extend = 6;</code>
        */
 
       public Builder removeExtend(
@@ -1176,7 +1238,7 @@ public final class MessageProto {
         return internalGetMutableExtend().getMutableMap();
       }
       /**
-       * <code>map&lt;string, string&gt; extend = 5;</code>
+       * <code>map&lt;string, string&gt; extend = 6;</code>
        */
       public Builder putExtend(
           java.lang.String key,
@@ -1188,7 +1250,7 @@ public final class MessageProto {
         return this;
       }
       /**
-       * <code>map&lt;string, string&gt; extend = 5;</code>
+       * <code>map&lt;string, string&gt; extend = 6;</code>
        */
 
       public Builder putAllExtend(
@@ -2235,14 +2297,14 @@ public final class MessageProto {
   static {
     java.lang.String[] descriptorData = {
       "\n2com/study/signalcommon/protobuf/Messag" +
-      "eProto.proto\"\242\001\n\003Msg\022\r\n\005msgid\030\001 \001(\r\022\017\n\007m" +
-      "sgtype\030\002 \001(\r\022\024\n\005fuser\030\003 \001(\0132\005.User\022\024\n\005tu" +
-      "ser\030\004 \001(\0132\005.User\022 \n\006extend\030\005 \003(\0132\020.Msg.E" +
-      "xtendEntry\032-\n\013ExtendEntry\022\013\n\003key\030\001 \001(\t\022\r" +
-      "\n\005value\030\002 \001(\t:\0028\001\";\n\004User\022\013\n\003rid\030\001 \001(\t\022\013" +
-      "\n\003uid\030\002 \001(\t\022\014\n\004name\030\003 \001(\t\022\013\n\003img\030\004 \001(\tB/" +
-      "\n\037com.study.signalcommon.protobufB\014Messa" +
-      "geProtob\006proto3"
+      "eProto.proto\"\264\001\n\003Msg\022\r\n\005msgid\030\001 \001(\r\022\020\n\010s" +
+      "rcmsgid\030\002 \001(\r\022\017\n\007msgtype\030\003 \001(\r\022\024\n\005fuser\030" +
+      "\004 \001(\0132\005.User\022\024\n\005tuser\030\005 \001(\0132\005.User\022 \n\006ex" +
+      "tend\030\006 \003(\0132\020.Msg.ExtendEntry\032-\n\013ExtendEn" +
+      "try\022\013\n\003key\030\001 \001(\t\022\r\n\005value\030\002 \001(\t:\0028\001\";\n\004U" +
+      "ser\022\013\n\003rid\030\001 \001(\t\022\013\n\003uid\030\002 \001(\t\022\014\n\004name\030\003 " +
+      "\001(\t\022\013\n\003img\030\004 \001(\tB/\n\037com.study.signalcomm" +
+      "on.protobufB\014MessageProtob\006proto3"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -2261,7 +2323,7 @@ public final class MessageProto {
     internal_static_Msg_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_Msg_descriptor,
-        new java.lang.String[] { "Msgid", "Msgtype", "Fuser", "Tuser", "Extend", });
+        new java.lang.String[] { "Msgid", "Srcmsgid", "Msgtype", "Fuser", "Tuser", "Extend", });
     internal_static_Msg_ExtendEntry_descriptor =
       internal_static_Msg_descriptor.getNestedTypes().get(0);
     internal_static_Msg_ExtendEntry_fieldAccessorTable = new

@@ -3,6 +3,7 @@ package com.study.signalproxy.service;
 import com.study.signalcommon.component.PacketTransceiver;
 import com.study.signalcommon.constant.GlobalConstants;
 import com.study.signalcommon.util.Tool;
+import com.study.signalproxy.ProxyServer;
 import com.study.signalproxy.dto.Router2ProxyEvent;
 import lombok.extern.slf4j.Slf4j;
 
@@ -58,7 +59,6 @@ public class TcpClient {
 //        }
 //    }
 
-    private volatile boolean lastReadFlag;
     private volatile long lastReadTs;//多个线程共享（读线程更新、心跳（写）线程读取）
     private AtomicInteger errorCount = new AtomicInteger(0);//多个线程共享
 
@@ -72,7 +72,9 @@ public class TcpClient {
                 DataInputStream in = new DataInputStream(socket.getInputStream());
                 int index = 0;
                 if (in.available() > 0) {
-//                    ProxyServer.tcpClientTimeWheel.add(TcpClient.this.server + GlobalConstants.SYMBOL.AT + TcpClient.this.port, TcpClient.this);
+                    //收到字节则激活时间轮
+                    ProxyServer.tcpClientTimeWheel.add(TcpClient.this.server + GlobalConstants.SYMBOL.AT + TcpClient.this.port, TcpClient.this);
+                    //解决粘包问题
                     if (Tool.findMagic(in.readByte(), index)
                             && Tool.findMagic(in.readByte(), index + 1)
                             && Tool.findMagic(in.readByte(), index + 2)
@@ -130,14 +132,9 @@ public class TcpClient {
             long currentTs = System.currentTimeMillis();
             if (TcpClient.this.lastReadTs > 0) {
                 if ((currentTs - TcpClient.this.lastReadTs) > GlobalConstants.HEARTBEAT_INTERVAL) {
-                    SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss.SSSZ");
-                    System.out.println(sdf.format(currentTs) + "," + sdf.format(TcpClient.this.lastReadTs) + "," + (currentTs - TcpClient.this.lastReadTs));
-                    TcpClient.this.send(GlobalConstants.MSG_ID.KEEPALIVE,
-                            PacketTransceiver.packMessage(
-                                    GlobalConstants.MSG_ID.KEEPALIVE,
-                                    GlobalConstants.MSG_TYPE.NOTHING,
-                                    GlobalConstants.USER.HEARTBEAT,
-                                    GlobalConstants.USER.HEARTBEAT));
+//                    SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss.SSSZ");
+//                    System.out.println(sdf.format(currentTs) + "," + sdf.format(TcpClient.this.lastReadTs) + "," + (currentTs - TcpClient.this.lastReadTs));
+                    TcpClient.this.send(GlobalConstants.MSG_ID.KEEPALIVE, new byte[0]);//空字节保活
                 } else {
                     //如果阈值范围内错误次数一道道3次以上，则直接重连
                     if (TcpClient.this.errorCount.get() > 3) {

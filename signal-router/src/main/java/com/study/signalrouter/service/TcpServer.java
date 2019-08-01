@@ -30,7 +30,7 @@ public class TcpServer {
                 && this.server.isBound()
                 && !this.server.isClosed();
         if (!flag) {
-            System.out.println("server is not available");
+            log.error("tcpserver is not available");
         }
         return flag;
     }
@@ -55,9 +55,9 @@ public class TcpServer {
     public void start() {
         try {
             this.server = new ServerSocket(port);
-//            log.info("tcpserver is started");
+            log.info("tcpserver is started");
         } catch (IOException e) {
-//            log.error("tcpserver starts error: {}", e.getMessage());
+            log.error("tcpserver starts error: {}", e.getMessage());
             System.exit(-1);//服务开启异常，退出
         }
 
@@ -65,13 +65,13 @@ public class TcpServer {
         if (available) {
             //服务启动后开启时间轮维护客户端连接
             socketTimeWheel.start();
-//            log.info("timewheel is started");
+            log.info("timewheel is started");
         }
 
         while (available) {
             try {
                 final Socket socket = server.accept();//阻塞模式获取客户端连接
-//                log.info("accept service from {}", service.getInetAddress().getHostAddress());
+                log.info("accept socket from {}", socket.getInetAddress().getHostAddress());
                 //接收到客户端连接就创建一个客户端收发器
                 SocketTransceiver client = new SocketTransceiver(socket) {
                     //用户进教室回调
@@ -89,10 +89,8 @@ public class TcpServer {
                         roomUserToSocket.get(rid).forEach((key, val) -> {
                             if (key.equals(uid)) {
                                 val.send(GlobalConstants.MSG_ID.REPLY, responseMsg);
-                                System.out.println("发送回应消息给" + rid + "-" + uid);
                             } else {
                                 val.send(GlobalConstants.MSG_ID.BROADCAST, routerMsg);
-                                System.out.println("发送广播消息给" + rid + "-" + uid);
                             }
                         });
                     }
@@ -136,7 +134,7 @@ public class TcpServer {
                 //接收到客户端连接加入时间轮，当收到proxy的心跳包会激活时间轮
                 socketTimeWheel.add(client.getIp(), client);
             } catch (IOException e) {
-//                log.error("accept service exception：{}", e.getMessage());
+                log.error("accept socket exception：{}", e.getMessage());
             }
         }
     }
@@ -148,7 +146,7 @@ public class TcpServer {
         try {
             this.server.close();
         } catch (IOException e) {
-//            log.error("tcpserver close exception：{}", e.getMessage());
+            log.error("tcpserver close exception：{}", e.getMessage());
         }
     }
 }

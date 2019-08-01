@@ -23,6 +23,14 @@ public class PacketTransceiver {
         }
     }
 
+    public static byte[] packMessage(Integer msgid, MessageProto.User fuser) {
+        return MessageProto.Msg.newBuilder()
+                .setMsgid(msgid)
+                .setFuser(fuser)
+                .build()
+                .toByteArray();
+    }
+
     public static byte[] packMessage(Integer msgid, Integer msgtype, MessageProto.User fuser, MessageProto.User tuser) {
         return MessageProto.Msg.newBuilder()
                 .setMsgid(msgid)
@@ -36,6 +44,29 @@ public class PacketTransceiver {
     public static byte[] packMessage(Integer msgid, Integer msgtype, Map<String, String> extend, MessageProto.User fuser, MessageProto.User tuser) {
         return MessageProto.Msg.newBuilder()
                 .setMsgid(msgid)
+                .setMsgtype(msgtype)
+                .putAllExtend(extend)
+                .setFuser(fuser)
+                .setTuser(tuser)
+                .build()
+                .toByteArray();
+    }
+
+    public static byte[] packMessage(Integer msgid, Integer srcmsgid, Integer msgtype, MessageProto.User fuser, MessageProto.User tuser) {
+        return MessageProto.Msg.newBuilder()
+                .setMsgid(msgid)
+                .setSrcmsgid(srcmsgid)
+                .setMsgtype(msgtype)
+                .setFuser(fuser)
+                .setTuser(tuser)
+                .build()
+                .toByteArray();
+    }
+
+    public static byte[] packMessage(Integer msgid, Integer srcmsgid, Integer msgtype, Map<String, String> extend, MessageProto.User fuser, MessageProto.User tuser) {
+        return MessageProto.Msg.newBuilder()
+                .setMsgid(msgid)
+                .setSrcmsgid(srcmsgid)
                 .setMsgtype(msgtype)
                 .putAllExtend(extend)
                 .setFuser(fuser)

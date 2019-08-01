@@ -40,7 +40,7 @@ const mutations = {
     console.log(state.online_users)
     console.log(state.online_users.size())
   },
-  ws_chat_come(state, msg) {
+  ws_one_chat(state, msg) {
     state.messages.push(msg)
     console.log(state.messages)
   }

@@ -19,17 +19,17 @@ public class GlobalConstants {
 
     public static final class MSG_ID {
         public static final int REPLY = 100;
-        public static final int ENTERROOM = 101;
-        public static final int KEEPALIVE = 102;
+//        public static final int ENTERROOM = 101;
+        public static final int KEEPALIVE = 101;
+        public static final int UNICAST = 102;
         public static final int BROADCAST = 103;
-        public static final int UNICAST = 104;
     }
 
     public static final class MSG_TYPE {
-        public static final int NOTHING = 0;
+        public static final int LEAVE = 0;
         public static final int ENTER = 1;
-        public static final int LEAVE = 2;
-        public static final int CHAT = 3;
+//        public static final int LEAVE = 2;
+        public static final int CHAT = 2;
     }
 
     public static final class HEADER {
@@ -51,6 +51,12 @@ public class GlobalConstants {
     public static final class REDIS_KEY {
         public static final String SIGNAL_WORKER = "SIGNAL_WORKER";
         public static final String USER_LIST = "USER_LIST";
+        public static final String CHAT_LIST = "CHAT_LIST";
+    }
+
+    public static final class KEY {
+        public static final String USERS = "users";
+        public static final String CHATS = "chats";
     }
 
     public static final class REGEX {

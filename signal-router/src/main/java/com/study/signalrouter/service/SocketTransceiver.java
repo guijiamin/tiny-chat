@@ -8,7 +8,9 @@ import com.study.signalcommon.util.Tool;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.BasicHttpEntity;
 import org.apache.http.entity.ByteArrayEntity;
+import org.apache.http.entity.SerializableEntity;
 import org.apache.http.util.EntityUtils;
 
 import java.io.DataInputStream;
@@ -48,7 +50,7 @@ public abstract class SocketTransceiver implements Runnable {
                 && !this.socket.isInputShutdown()
                 && !this.socket.isOutputShutdown();
         if (!flag) {
-            System.out.println("service is not available");
+            log.error("socket is not available");
         }
         return flag;
     }
@@ -78,7 +80,7 @@ public abstract class SocketTransceiver implements Runnable {
         try {
             this.socket.close();
         } catch (IOException e) {
-//            log.error("close service exception：{}", e.getMessage());
+            log.error("close socket exception：{}", e.getMessage());
         } finally {
             this.socket = null;
             //回调，删除proxy2socket中当前对象数据
@@ -119,6 +121,7 @@ public abstract class SocketTransceiver implements Runnable {
                     short len = Tool.byteArrayToShort(contentLenBuffer);
 
                     int msgid = in.read();
+                    //在最外层区分心跳和业务消息
                     if (msgid != GlobalConstants.MSG_ID.KEEPALIVE) {
                         byte[] messageProtoBuffer = new byte[len];
                         for (int i = 0; i < len; i++) {
@@ -126,76 +129,64 @@ public abstract class SocketTransceiver implements Runnable {
                         }
                         //收到消息
                         MessageProto.Msg msg = PacketTransceiver.parseMessage(messageProtoBuffer);
+                        if (msg == null) return;
                         switch (msgid) {
-                            //收到用户进教室消息
-                            //1、发送给worker持久化
-                            //2、找到该房间的所有proxy连接，发送103/1消息
-                            case GlobalConstants.MSG_ID.ENTERROOM:
-                                System.out.println("准备发送给worker");
-                                //TODO 发送给worker
-                                Future<HttpResponse> future = TcpServer.executor.submit(new Callable<HttpResponse>() {
-                                    @Override
-                                    public HttpResponse call() {
-                                        HttpPost httpPost = new HttpPost("http://localhost:8989/chat");
-                                        httpPost.addHeader("Content-Type", "application/json; charset=utf-8");
-                                        httpPost.setEntity(new ByteArrayEntity(messageProtoBuffer));
-                                        HttpResponse response = null;
-                                        try {
-                                            response = TcpServer.httpclient.execute(httpPost);
-                                        } catch (IOException e) {
-//                                            log.error(e.getMessage());
-                                        }
-                                        return response;
-                                    }
-                                });
-                                try {
-                                    HttpResponse response = future.get();
-                                    byte[] responseMsg = EntityUtils.toByteArray(response.getEntity());
-                                    Map<String, String> extend = new HashMap<>();
-                                    extend.put("data", JsonFormat.printToString(msg.getFuser()));
-                                    byte[] routerMsg = PacketTransceiver.packMessage(GlobalConstants.MSG_ID.BROADCAST, GlobalConstants.MSG_TYPE.ENTER, extend, msg.getFuser(), msg.getTuser());
-                                    this.onUserEnterRoom(this, msg.getFuser().getRid(), msg.getFuser().getUid(), responseMsg, routerMsg);
-                                } catch (InterruptedException | ExecutionException e) {
-//                                    log.error("future get exception: {}", e.getMessage());
-                                }
+                            case GlobalConstants.MSG_ID.UNICAST://收到proxy的单播消息
                                 break;
-                            //收到用户广播消息
-                            //1、发送给worker持久化
-                            case GlobalConstants.MSG_ID.BROADCAST:
+                            case GlobalConstants.MSG_ID.BROADCAST://收到proxy的广播消息
                                 int msgtype = msg.getMsgtype();
                                 switch (msgtype) {
-                                    case GlobalConstants.MSG_TYPE.ENTER://这个消息理论上不是用户主动发送
-                                        break;
-                                    case GlobalConstants.MSG_TYPE.LEAVE:
+                                    case GlobalConstants.MSG_TYPE.LEAVE://离开教室广播
                                         this.onUserLeaveRoom(this.ip, msg.getFuser().getRid(), new byte[0]);
                                         break;
+                                    case GlobalConstants.MSG_TYPE.ENTER://进教室广播
+                                        //发送给worker
+                                        Future<HttpResponse> future = TcpServer.executor.submit(() -> {
+                                                HttpPost httpPost = new HttpPost("http://localhost:8989/broadcast/enter");
+                                                httpPost.addHeader("Content-Type", "application/json; charset=utf-8");
+                                                httpPost.setEntity(new SerializableEntity(msg.getFuser()));
+                                                HttpResponse response = null;
+                                                try {
+                                                    response = TcpServer.httpclient.execute(httpPost);
+                                                } catch (IOException e) {
+                                                    log.error(e.getMessage());
+                                                }
+                                                return response;
+                                        });
+                                        try {
+                                            HttpResponse response = future.get();
+                                            //TODO
+//                                            byte[] responseMsg = EntityUtils.toByteArray(response.getEntity());
+//                                            Map<String, String> extend = new HashMap<>();
+//                                            extend.put("data", JsonFormat.printToString(msg.getFuser()));
+//
+//                                            byte[] routerMsg = PacketTransceiver.packMessage(GlobalConstants.MSG_ID.BROADCAST, GlobalConstants.MSG_TYPE.ENTER, extend, msg.getFuser(), msg.getTuser());
+//
+//                                            this.onUserEnterRoom(this, msg.getFuser().getRid(), msg.getFuser().getUid(), responseMsg, routerMsg);
+                                        } catch (InterruptedException | ExecutionException e) {
+                                            log.error("future get exception: {}", e.getMessage());
+                                        }
+                                        break;
                                     case GlobalConstants.MSG_TYPE.CHAT:
+                                        this.onUserChat(true);
                                         break;
                                     default:
                                         break;
                                 }
-                                break;
-                            case GlobalConstants.MSG_ID.UNICAST:
                                 break;
                             default:
                                 break;
                         }
                     } else {
                         this.onProxyHeartBeat(this.ip);
-                        this.send(GlobalConstants.MSG_ID.KEEPALIVE,
-                                PacketTransceiver.packMessage(
-                                        GlobalConstants.MSG_ID.KEEPALIVE,
-                                        GlobalConstants.MSG_TYPE.NOTHING,
-                                        GlobalConstants.USER.HEARTBEAT,
-                                        GlobalConstants.USER.HEARTBEAT
-                                ));
+                        this.send(GlobalConstants.MSG_ID.KEEPALIVE, new byte[0]);//回应0字节报活
                     }
                 }
             } catch (IOException e) {
-//                log.error("read data io exception: {}", e.getMessage());
+                log.error("read data io exception: {}", e.getMessage());
                 //TODO 读数据异常待处理
             } catch (Exception e) {
-//                log.error("read data other exception: {}", e.getMessage());
+                log.error("read data other exception: {}", e.getMessage());
             }
         }
     }

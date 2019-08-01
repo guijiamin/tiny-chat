@@ -21,8 +21,9 @@ export default {
   data() {
     return {
       WS: undefined,
-      // ADDR: 'echo.websocket.org',
       ADDR: 'localhost:8787',
+      lastReadTs: 0,
+      HEARTBEAT_INTERVAL: 3000,
     }
   },
   components: { 
@@ -51,104 +52,86 @@ export default {
       this.$store.commit('ws_open', this.WS)
     },
     wsOnmessage(evt) {
-      console.log('收到消息', evt)
+      this.lastReadTs = new Date().getTime()
       let self = this
-      let win = window
       let reader = new FileReader()
       reader.readAsArrayBuffer(evt.data)
       reader.onload = function (e) {
         let buf = new Uint8Array(reader.result)
         let msg = proto.Msg.deserializeBinary(buf)
-        console.log('转换二进制', msg.toObject())
-        win.m = msg
-        console.log(typeof(msg))
-        if (msg.getMsgid() == MSG_ID.REPLY) {
-          console.log('receive reply')
-          self.$store.commit('ws_enter_room', JSON.parse(msg.getExtendMap().get('data')))
-          // this.keepAlive()
-        } else if (msg.getMsgid() == MSG_ID.BROADCAST) {
-          let msgtype = msg.getMsgtype()
-          if (msgtype == MSG_TYPE.ENTER) {//someone enter
-            console.log('someone enter')
-            // console.log(data.msg.data)
-            //增加在线列表
-            self.$store.commit('ws_one_enter', JSON.parse(msg.getExtendMap().get('data')))
-          } else if (msgtype == MSG_TYPE.LEAVE) {//someone leave
-            console.log('someone leave')
-            // console.log(data.msg.data)
-            //删除在线列表
-            // self.$store.commit('ws_one_leave', data.msg.data)
-          } else if (msgtype == MSG_TYPE.CHAT) {//someone chat
-            console.log('someone chat')
-            // console.log(data.msg)
-            // let message = {
-            //   rid: data.rid,
-            //   uid: data.uid,
-            //   name: data.name,
-            //   img: data.img,
-            //   content: data.msg.data
-            // }
-            // this.$store.commit('ws_chat_come', message)
-          }
+        console.log('收到消息', msg.toObject())
+
+        switch (msg.getMsgid()) {
+          case MSG_ID.REPLY:
+            console.log('receive reply')
+            let msgtype = msg.getMsgtype()
+            switch (msg.getSrcmsgid()) {
+              case MSG_ID.UNICAST:
+                break;
+              case MSG_ID.BROADCAST:
+                switch (msgtype) {
+                  case MSG_TYPE.ENTER://收到自己发送的进教室广播消息的回应消息
+                    self.$store.commit('ws_enter_room', JSON.parse(msg.getExtendMap().get('users')))//提取用户列表
+                    break;
+                  case MSG_TYPE.CHAT://收到自己发送的聊天广播消息的回应消息
+                    break;
+                  default:
+                    break;
+                }
+                break;
+              default:
+                break;
+            }
+            break;
+          case MSG_ID.KEEPALIVE:
+            console.log('receive heartbeat')
+            break;
+          case MSG_ID.UNICAST:
+            console.log('receive unicast')
+            break;
+          case MSG_ID.BROADCAST:
+            console.log('receive broadcast')
+            switch (msg.getMsgtype()) {
+              case MSG_TYPE.LEAVE://收到有人离开教室的广播消息
+                console.log('someone leave')
+                self.$store.commit('ws_one_leave', JSON.parse(msg.getExtendMap().get('data')))
+                break;
+              case MSG_TYPE.ENTER://收到有人进教室的广播消息
+                console.log('someone enter')
+                self.$store.commit('ws_one_enter', JSON.parse(msg.getExtendMap().get('data')))
+                break;
+              case MSG_TYPE.CHAT://收到有人发聊天的广播消息
+                console.log('someone chat')
+                self.$store.commit('ws_one_chat', JSON.parse(msg.getExtendMap().get('data')))
+                break;
+              default:
+                break;
+            }
+            break;
+          default:
+            break;
         }
       }
     },
     wsOnclose(evt) {
       console.log('关闭连接', evt)
+      //TODO 重连
     },
     sendMsg(val) {
       this.WS.send(val)
     },
     keepAlive() {
-      // let msg = {
-      //   "msgid": "15",
-      //   "rid": this.self_user.rid,
-      //   "uid": this.self_user.uid,
-      //   "name": this.self_user.name,
-      //   "img": this.self_user.img
-      // }
-      // setInterval(() => {this.sendMsg(JSON.stringify(msg))}, 5000)
-      // let m = new proto.Msg();
-      // m.setMsgid(101);
-      // m.setMsgtype(0);
-      // // m.getExtendMap().set("1","2");
-      // let fuser = new proto.User();
-      // fuser.setRid("heartbeat");
-      // fuser.setUid("heartbeat");
-      // fuser.setName("heartbeat");
-      // fuser.setImg("heartbeat");
-      // m.setFuser(fuser);
-      // m.setTuser(fuser);
-      // console.log(m.toObject());
-      // //序列化
-      // let bytes = m.serializeBinary();
-      // // console.log(bytes);
-      // setInterval(() => {this.sendMsg(bytes)}, 5000)
-      let m1 = new proto.Msg();
-      m1.setMsgid(101);
-      m1.setMsgtype(1);
-      // m.getExtendMap().set("1","2");
-      let fuser1 = new proto.User();
-      fuser1.setRid("jz123");
-      fuser1.setUid("123");
-      fuser1.setName("gjm");
-      fuser1.setImg("avatar1.svg");
-      m1.setFuser(fuser1);
-      m1.setTuser(fuser1);
-      console.log(m1.toObject());
-      //序列化
-      let bytes1 = m1.serializeBinary();
-      console.log(bytes1)
-      setTimeout(() => this.sendMsg(bytes1),1000)
-    },
-    parseBlob(val) {
-      let reader = new FileReader()
-      reader.readAsArrayBuffer(val)
-      reader.onload = function (e) {
-        let buf = new Uint8Array(reader.result)
-        let m = proto.Msg.deserializeBinary(buf).toObject()
-        console.log('转换二进制', m)
-        return m
+      if (this.lastReadTs > 0 && (new Date().getTime() - this.lastReadTs > this.HEARTBEAT_INTERVAL)) {
+        let msg = new proto.Msg()
+        msg.setMsgid(MSG_ID.KEEPALIVE)
+        let fuser = new proto.User()
+        fuser.setRid(this.self_user.rid)
+        fuser.setUid(this.self_user.uid)
+        fuser.setName(this.self_user.name)
+        msg.setFuser(fuser)
+        //序列化
+        let bytes = msg.serializeBinary();
+        this.sendMsg(bytes)
       }
     }
   },
@@ -165,16 +148,19 @@ export default {
   },
   watch:  {
     init_timestamp(val) {
-      console.log('开始创建ws连接:' + val)
+      console.log('开始创建ws连接', val)
       //获取到参数，创建ws连接
       this.createWebsocket()
     },
     ws_open_timestamp(val) {
-      console.log('ws连接已打开：' + val)
-      //发送进教室消息
+      console.log('ws连接已打开', val)
+      //开启定时任务
+      setInterval(() => this.keepAlive(), 1000)
+      //发送进教室广播消息103/1
       let msg = new proto.Msg()
-      msg.setMsgid(MSG_ID.ENTERROOM)
+      msg.setMsgid(MSG_ID.BROADCAST)
       msg.setMsgtype(MSG_TYPE.ENTER)
+
       let fuser = new proto.User()
       fuser.setRid(this.self_user.rid)
       fuser.setUid(this.self_user.uid)
@@ -182,14 +168,12 @@ export default {
       fuser.setImg(this.self_user.img)
       msg.setFuser(fuser)
       msg.setTuser(fuser)
-      console.log("发送进教室消息", msg.toObject())
-      //序列化
-      let bytes = msg.serializeBinary()
-      this.sendMsg(bytes)
+      //序列化发送
+      this.sendMsg(msg.serializeBinary())
     }
   },
   mounted() {
-    console.log('init chatroom')
+    console.log('初始化房间...')
     let url = location.href
     let rid = this.getQuery(url, 'rid')
     if (!rid) {

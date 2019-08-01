@@ -51,6 +51,14 @@ public class Tool {
                 rid;
     }
 
+    public static String getChatListKeyByWorker(String rid) {
+        return GlobalConstants.REDIS_KEY.SIGNAL_WORKER +
+                GlobalConstants.SYMBOL.COLON +
+                GlobalConstants.REDIS_KEY.CHAT_LIST +
+                GlobalConstants.SYMBOL.COLON +
+                rid;
+    }
+
     public static boolean isEmpty(Object str) {
         return (str == null || "".equals(str));
     }
