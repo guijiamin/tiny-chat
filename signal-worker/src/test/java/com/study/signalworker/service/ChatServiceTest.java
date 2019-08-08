@@ -40,18 +40,6 @@ public class ChatServiceTest {
     @Test
     public void chat() throws Exception {
 
-        chatService.chat(MessageProto.Msg.newBuilder()
-                .setMsgid(101)
-                .setMsgtype(1)
-                .setTuser(GlobalConstants.USER.HEARTBEAT)
-                .setFuser(GlobalConstants.USER.HEARTBEAT)
-                .build());
-        chatService.chat(MessageProto.Msg.newBuilder()
-                .setMsgid(101)
-                .setMsgtype(1)
-                .setTuser(PacketTransceiver.generateUser("rid_heartbeat", "456", "789", "000"))
-                .setFuser(PacketTransceiver.generateUser("rid_heartbeat", "456", "789", "000"))
-                .build());
     }
 
 }

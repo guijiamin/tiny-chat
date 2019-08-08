@@ -57,6 +57,8 @@ public class GlobalConstants {
     public static final class KEY {
         public static final String USERS = "users";
         public static final String CHATS = "chats";
+        public static final String USER = "user";
+        public static final String CHAT = "chat";
     }
 
     public static final class REGEX {

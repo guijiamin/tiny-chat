@@ -130,7 +130,7 @@ public class TcpClient {
             //该线程里不需要关注socket状态，因为send方法内部关注了
             //距离上次读到数据超过阈值才发送一条心跳
             long currentTs = System.currentTimeMillis();
-            if (TcpClient.this.lastReadTs > 0) {
+//            if (TcpClient.this.lastReadTs > 0) {
                 if ((currentTs - TcpClient.this.lastReadTs) > GlobalConstants.HEARTBEAT_INTERVAL) {
 //                    SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss.SSSZ");
 //                    System.out.println(sdf.format(currentTs) + "," + sdf.format(TcpClient.this.lastReadTs) + "," + (currentTs - TcpClient.this.lastReadTs));
@@ -142,7 +142,7 @@ public class TcpClient {
                         System.out.println("失败次数超过3次，重连");
                     }
                 }
-            }
+//            }
         }
     };
 

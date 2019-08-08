@@ -3,6 +3,8 @@ package com.study.signalcommon.dto;
 import com.study.signalcommon.protobuf.MessageProto;
 import lombok.Data;
 
+import java.io.Serializable;
+
 /**
  * Decription
  * <p>
@@ -12,7 +14,7 @@ import lombok.Data;
  * @author guijiamin.
  */
 @Data
-public class Chat {
+public class Chat implements Serializable {
     String rid;
     String uid;
     String name;

@@ -1,17 +1,14 @@
 package com.study.signalrouter.service;
 
+import com.alibaba.fastjson.JSONObject;
 import com.googlecode.protobuf.format.JsonFormat;
 import com.study.signalcommon.component.PacketTransceiver;
 import com.study.signalcommon.constant.GlobalConstants;
+import com.study.signalcommon.dto.Chat;
+import com.study.signalcommon.dto.JsonResult;
 import com.study.signalcommon.protobuf.MessageProto;
 import com.study.signalcommon.util.Tool;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.BasicHttpEntity;
-import org.apache.http.entity.ByteArrayEntity;
-import org.apache.http.entity.SerializableEntity;
-import org.apache.http.util.EntityUtils;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -19,9 +16,6 @@ import java.io.IOException;
 import java.net.Socket;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 
 /**
  * Decription
@@ -121,6 +115,7 @@ public abstract class SocketTransceiver implements Runnable {
                     short len = Tool.byteArrayToShort(contentLenBuffer);
 
                     int msgid = in.read();
+                    System.out.println("receive msgid: " + msgid);
                     //在最外层区分心跳和业务消息
                     if (msgid != GlobalConstants.MSG_ID.KEEPALIVE) {
                         byte[] messageProtoBuffer = new byte[len];
@@ -137,38 +132,59 @@ public abstract class SocketTransceiver implements Runnable {
                                 int msgtype = msg.getMsgtype();
                                 switch (msgtype) {
                                     case GlobalConstants.MSG_TYPE.LEAVE://离开教室广播
-                                        this.onUserLeaveRoom(this.ip, msg.getFuser().getRid(), new byte[0]);
+                                        JsonResult leaveResult = TcpServer.httpclient.doPost("http://localhost:8989/broadcast/leave", msg.getFuser().toByteArray());
+                                        if (leaveResult != null && leaveResult.getFlag() == 1) {
+                                            Map<String, String> routeExtend = new HashMap<>();
+                                            routeExtend.put(GlobalConstants.KEY.USER, JsonFormat.printToString(msg.getFuser()));
+                                            byte[] routeMsg = PacketTransceiver.packMessage(GlobalConstants.MSG_ID.BROADCAST, GlobalConstants.MSG_TYPE.LEAVE, routeExtend, msg.getFuser(), msg.getTuser());
+                                            this.onUserLeaveRoom(this, msg.getFuser().getRid(), msg.getFuser().getUid(), routeMsg);
+                                        }
                                         break;
                                     case GlobalConstants.MSG_TYPE.ENTER://进教室广播
                                         //发送给worker
-                                        Future<HttpResponse> future = TcpServer.executor.submit(() -> {
-                                                HttpPost httpPost = new HttpPost("http://localhost:8989/broadcast/enter");
-                                                httpPost.addHeader("Content-Type", "application/json; charset=utf-8");
-                                                httpPost.setEntity(new SerializableEntity(msg.getFuser()));
-                                                HttpResponse response = null;
-                                                try {
-                                                    response = TcpServer.httpclient.execute(httpPost);
-                                                } catch (IOException e) {
-                                                    log.error(e.getMessage());
-                                                }
-                                                return response;
-                                        });
-                                        try {
-                                            HttpResponse response = future.get();
-                                            //TODO
-//                                            byte[] responseMsg = EntityUtils.toByteArray(response.getEntity());
-//                                            Map<String, String> extend = new HashMap<>();
-//                                            extend.put("data", JsonFormat.printToString(msg.getFuser()));
-//
-//                                            byte[] routerMsg = PacketTransceiver.packMessage(GlobalConstants.MSG_ID.BROADCAST, GlobalConstants.MSG_TYPE.ENTER, extend, msg.getFuser(), msg.getTuser());
-//
-//                                            this.onUserEnterRoom(this, msg.getFuser().getRid(), msg.getFuser().getUid(), responseMsg, routerMsg);
-                                        } catch (InterruptedException | ExecutionException e) {
-                                            log.error("future get exception: {}", e.getMessage());
+//                                        Future<HttpResponse> future = TcpServer.executor.submit(() -> {
+//                                                HttpPost httpPost = new HttpPost("http://localhost:8989/broadcast/enter");
+//                                                httpPost.addHeader("Content-Type", "application/json; charset=utf-8");
+//                                                httpPost.setEntity(new SerializableEntity(msg.getFuser()));
+//                                                HttpResponse response = null;
+//                                                try {
+//                                                    response = TcpServer.httpclient.execute(httpPost);
+//                                                } catch (IOException e) {
+//                                                    log.error(e.getMessage());
+//                                                }
+//                                                return response;
+//                                        });
+//                                        try {
+//                                            HttpResponse response = future.get();
+//                                            //TODO
+////                                            byte[] responseMsg = EntityUtils.toByteArray(response.getEntity());
+////                                            Map<String, String> extend = new HashMap<>();
+////                                            extend.put("data", JsonFormat.printToString(msg.getFuser()));
+////
+////                                            byte[] routerMsg = PacketTransceiver.packMessage(GlobalConstants.MSG_ID.BROADCAST, GlobalConstants.MSG_TYPE.ENTER, extend, msg.getFuser(), msg.getTuser());
+////
+////                                            this.onUserEnterRoom(this, msg.getFuser().getRid(), msg.getFuser().getUid(), responseMsg, routerMsg);
+//                                        } catch (InterruptedException | ExecutionException e) {
+//                                            log.error("future get exception: {}", e.getMessage());
+//                                        }
+                                        System.out.println("receive enter");
+                                        JsonResult enterResult = TcpServer.httpclient.doPost("http://localhost:8989/broadcast/enter", msg.getFuser().toByteArray());
+                                        if (enterResult != null && enterResult.getFlag() == 2) {
+                                            Map<String, String> routeExtend = new HashMap<>();
+                                            routeExtend.put(GlobalConstants.KEY.USER, JsonFormat.printToString(msg.getFuser()));
+                                            byte[] routeMsg = PacketTransceiver.packMessage(GlobalConstants.MSG_ID.BROADCAST, GlobalConstants.MSG_TYPE.ENTER, routeExtend, msg.getFuser(), msg.getTuser());
+                                            byte[] respMsg = PacketTransceiver.packMessage(GlobalConstants.MSG_ID.REPLY, GlobalConstants.MSG_ID.BROADCAST, GlobalConstants.MSG_TYPE.ENTER, enterResult.getData(), msg.getFuser(), msg.getTuser());
+                                            this.onUserEnterRoom(this, msg.getFuser().getRid(), msg.getFuser().getUid(), respMsg, routeMsg);
                                         }
                                         break;
                                     case GlobalConstants.MSG_TYPE.CHAT:
-                                        this.onUserChat(true);
+                                        String str = msg.getExtendMap().get(GlobalConstants.KEY.CHAT);
+                                        Chat chat = JSONObject.parseObject(str, Chat.class);
+                                        JsonResult chatResult = TcpServer.httpclient.doPost("http://localhost:8989/broadcast/chat", JSONObject.toJSONBytes(chat));
+                                        if (chatResult != null && chatResult.getFlag() == 1) {
+                                            byte[] respMsg = PacketTransceiver.packMessage(GlobalConstants.MSG_ID.REPLY, GlobalConstants.MSG_ID.BROADCAST, GlobalConstants.MSG_TYPE.CHAT, msg.getExtendMap(), msg.getFuser(), msg.getTuser());
+                                            this.onUserChat(true, this, msg.getFuser().getRid(), msg.getFuser().getUid(), respMsg, messageProtoBuffer);
+                                        }
                                         break;
                                     default:
                                         break;
@@ -193,11 +209,11 @@ public abstract class SocketTransceiver implements Runnable {
 
     public abstract void onProxyHeartBeat(String proxy);
 
-    public abstract void onUserEnterRoom(SocketTransceiver socket, String rid, String uid, byte[] responseMsg, byte[] routerMsg);
+    public abstract void onUserEnterRoom(SocketTransceiver socket, String rid, String uid, byte[] responseMsg, byte[] routeMsg);
 
-    public abstract void onUserLeaveRoom(String proxy, String rid, byte[] msg);
+    public abstract void onUserLeaveRoom(SocketTransceiver socket, String rid, String uid, byte[] routeMsg);
 
-    public abstract void onUserChat(boolean isBroadCast);
+    public abstract void onUserChat(boolean isBroadCast, SocketTransceiver socket, String rid, String uid, byte[] responseMsg, byte[] routeMsg);
 
     public abstract void onDisconnect(String proxy);
 }

@@ -70,10 +70,16 @@ export default {
                 break;
               case MSG_ID.BROADCAST:
                 switch (msgtype) {
+                  case MSG_TYPE.LEAVE://收到自己发送的离开教室广播消息的回应消息
+                    break;
                   case MSG_TYPE.ENTER://收到自己发送的进教室广播消息的回应消息
-                    self.$store.commit('ws_enter_room', JSON.parse(msg.getExtendMap().get('users')))//提取用户列表
+                    self.$store.commit('ws_enter_room', msg.getExtendMap())//提取用户列表
                     break;
                   case MSG_TYPE.CHAT://收到自己发送的聊天广播消息的回应消息
+                    let chat = JSON.parse(msg.getExtendMap().get('chat'))
+                    chat.self = true
+                    console.log('receive self chat', chat)
+                    self.$store.commit('ws_one_chat', chat)
                     break;
                   default:
                     break;
@@ -94,15 +100,15 @@ export default {
             switch (msg.getMsgtype()) {
               case MSG_TYPE.LEAVE://收到有人离开教室的广播消息
                 console.log('someone leave')
-                self.$store.commit('ws_one_leave', JSON.parse(msg.getExtendMap().get('data')))
+                self.$store.commit('ws_one_leave', JSON.parse(msg.getExtendMap().get('user')))
                 break;
               case MSG_TYPE.ENTER://收到有人进教室的广播消息
                 console.log('someone enter')
-                self.$store.commit('ws_one_enter', JSON.parse(msg.getExtendMap().get('data')))
+                self.$store.commit('ws_one_enter', JSON.parse(msg.getExtendMap().get('user')))
                 break;
               case MSG_TYPE.CHAT://收到有人发聊天的广播消息
                 console.log('someone chat')
-                self.$store.commit('ws_one_chat', JSON.parse(msg.getExtendMap().get('data')))
+                self.$store.commit('ws_one_chat', JSON.parse(msg.getExtendMap().get('chat')))
                 break;
               default:
                 break;

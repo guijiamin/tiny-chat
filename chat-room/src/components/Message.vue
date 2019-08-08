@@ -35,7 +35,7 @@ export default {
       return this.$store.state.init.online_users.size()
     },
     messages() {
-      return this.$store.state.init.messages
+      return this.$store.state.init.chats
     },
     self_user() {
       return this.$store.state.init.self_user

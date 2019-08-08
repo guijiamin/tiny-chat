@@ -11,6 +11,7 @@
 <script>
 import VEmojiPicker from "v-emoji-picker"
 import packData from "v-emoji-picker/data/emojis.json"
+import {MSG_ID, MSG_TYPE} from '../utils/Constants.js'
 export default {
   name: "exampleInputEmoji",
   components: {
@@ -25,29 +26,51 @@ export default {
   methods: {
     onKeyup (e) {
       if (e.keyCode === 13 && this.content.length) {
-        let msg = {
-          msgtype: '3',
-          data: this.content
-        }
-        let data = {
-          rid: this.self_user.rid,
-          uid: this.self_user.uid,
-          name: this.self_user.name,
-          img: this.self_user.img,
-          msgid: '203',
-          msg: JSON.stringify(msg)
-        }
-        this.sendMsg(JSON.stringify(data));
+        // let msg = {
+        //   msgtype: '3',
+        //   data: this.content
+        // }
+        // let data = {
+        //   rid: this.self_user.rid,
+        //   uid: this.self_user.uid,
+        //   name: this.self_user.name,
+        //   img: this.self_user.img,
+        //   msgid: '203',
+        //   msg: JSON.stringify(msg)
+        // }
+        // this.sendMsg(JSON.stringify(data));
 
-        let message = {
+        // let message = {
+        //   rid: this.self_user.rid,
+        //   uid: this.self_user.uid,
+        //   name: this.self_user.name,
+        //   img: this.self_user.img,
+        //   content: this.content,
+        //   self: true
+        // }
+        // this.$store.commit('ws_chat_come', message)
+        // this.content = ''
+        let msg = new proto.Msg()
+        msg.setMsgid(MSG_ID.BROADCAST)
+        msg.setMsgtype(MSG_TYPE.CHAT)
+
+        let fuser = new proto.User()
+        fuser.setRid(this.self_user.rid)
+        fuser.setUid(this.self_user.uid)
+        fuser.setName(this.self_user.name)
+        fuser.setImg(this.self_user.img)
+        msg.setFuser(fuser)
+        msg.setTuser(fuser)
+
+        let chat = {
           rid: this.self_user.rid,
           uid: this.self_user.uid,
           name: this.self_user.name,
           img: this.self_user.img,
           content: this.content,
-          self: true
         }
-        this.$store.commit('ws_chat_come', message)
+        msg.getExtendMap().set("chat", JSON.stringify(chat))
+        this.sendMsg(msg.serializeBinary())
         this.content = ''
       }
     },

@@ -16,7 +16,7 @@ import java.util.Map;
  */
 public class JsonResult implements Serializable {
     private int flag;
-    private Object data;
+    private Map<String, String> data;
 
     public JsonResult() {
 
@@ -26,7 +26,7 @@ public class JsonResult implements Serializable {
         this.flag = flag;
     }
 
-    public JsonResult(int flag, Object data) {
+    public JsonResult(int flag, Map<String, String> data) {
         this.flag = flag;
         this.data = data;
     }
@@ -40,57 +40,57 @@ public class JsonResult implements Serializable {
         return this;
     }
 
-    public Object getData() {
+    public Map<String, String> getData() {
         if (this.data == null) {
-            this.data = new HashMap<String, Object>();
+            this.data = new HashMap<String, String>();
         }
         return this.data;
     }
 
-    public JsonResult setData(Object data) {
+    public JsonResult setData(Map<String, String> data) {
         if (this.flag > 0) {
             this.data = data;
         }
         return this;
     }
 
-    /**
-     * 向Map类型data中插入数据
-     *
-     * @param name
-     * @param value
-     */
-    public JsonResult putData(String name, Object value) {
-        Map<String, Object> map = this.initData(HashMap.class);
-        map.put(name, value);
-        return this;
-    }
-
-    /**
-     * 向List类型data中添加数据
-     *
-     * @param object
-     * @return
-     */
-    public JsonResult addData(Object object) {
-        List<Object> list = this.initData(ArrayList.class);
-        list.add(object);
-        return this;
-    }
-
-    @SuppressWarnings("unchecked")
-    private <E> E initData(Class<?> klass) {
-        if (this.data == null) {
-            try {
-                this.data = klass.newInstance();
-            } catch (InstantiationException e) {
-                e.printStackTrace();
-            } catch (IllegalAccessException e) {
-                e.printStackTrace();
-            }
-        }
-        return (E) this.data;
-    }
+//    /**
+//     * 向Map类型data中插入数据
+//     *
+//     * @param name
+//     * @param value
+//     */
+//    public JsonResult putData(String name, Object value) {
+//        Map<String, Object> map = this.initData(HashMap.class);
+//        map.put(name, value);
+//        return this;
+//    }
+//
+//    /**
+//     * 向List类型data中添加数据
+//     *
+//     * @param object
+//     * @return
+//     */
+//    public JsonResult addData(Object object) {
+//        List<Object> list = this.initData(ArrayList.class);
+//        list.add(object);
+//        return this;
+//    }
+//
+//    @SuppressWarnings("unchecked")
+//    private <E> E initData(Class<?> klass) {
+//        if (this.data == null) {
+//            try {
+//                this.data = klass.newInstance();
+//            } catch (InstantiationException e) {
+//                e.printStackTrace();
+//            } catch (IllegalAccessException e) {
+//                e.printStackTrace();
+//            }
+//        }
+//        return (E) this.data;
+//    }
 
 }
 

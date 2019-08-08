@@ -31,6 +31,7 @@ import java.util.concurrent.TimeUnit;
 public class ProxyServer extends WebSocketServer {
     public final static Map<String, HashMap<String, WebSocket>> onlineMap = new ConcurrentHashMap<>();
     public final static TimeWheel<String, WebSocket> webSocketTimeWheel = new TimeWheel<String, WebSocket>(1, 60, TimeUnit.SECONDS, new WebSocketExpirationListener<WebSocket>());
+    //2分钟内，proxy到router如果没有收到任何字节，则proxy断掉与该router连接，并重新建连
     public final static TimeWheel<String, TcpClient> tcpClientTimeWheel = new TimeWheel<String, TcpClient>(1, 120, TimeUnit.SECONDS, new TcpClientExpirationListener<TcpClient>());
 
     private TcpClient router;
@@ -50,7 +51,8 @@ public class ProxyServer extends WebSocketServer {
         webSocketTimeWheel.start();//与客户端心跳时间轮
         tcpClientTimeWheel.start();//与中心心跳时间轮
         //建立proxy到router的tcp连接（包括接收router消息线程和定时发送心跳线程）
-        new TcpClient("127.0.0.1", GlobalConstants.SERVER_PORT.ROUTER).start();
+        this.router = new TcpClient("127.0.0.1", GlobalConstants.SERVER_PORT.ROUTER);
+        this.router.start();
         //开启线程消费事件消息
         new Thread(new EventConsumer()).start();
     }
@@ -106,7 +108,7 @@ public class ProxyServer extends WebSocketServer {
         webSocketTimeWheel.remove(rid + GlobalConstants.SYMBOL.AT + uid);
 
         //对于当前房间其它用户，需要发送广播消息
-        MessageProto.User user = PacketTransceiver.generateUser(rid, uid, "", "");
+        MessageProto.User user = PacketTransceiver.generateUser(rid, uid, param.get("name"), param.get("img"));
         byte[] bytes = PacketTransceiver.packMessage(GlobalConstants.MSG_ID.BROADCAST, GlobalConstants.MSG_TYPE.LEAVE, user, user);
         Event event = new Proxy2RouterEvent(this.router, GlobalConstants.MSG_ID.BROADCAST, bytes);
         EventQueue.getInstance().produce(event);

@@ -1,10 +1,11 @@
 package com.study.signalrouter.service;
 
+import com.study.signalcommon.component.HttpClient;
 import com.study.signalcommon.component.TimeWheel;
 import com.study.signalcommon.constant.GlobalConstants;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.http.client.HttpClient;
-import org.apache.http.impl.client.HttpClients;
+//import org.apache.http.client.HttpClient;
+//import org.apache.http.impl.client.HttpClients;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -37,13 +38,9 @@ public class TcpServer {
 
     private final static Map<String, Map<String, SocketTransceiver>> roomUserToSocket = new ConcurrentHashMap<>();
     private final static TimeWheel<String, SocketTransceiver> socketTimeWheel = new TimeWheel<String, SocketTransceiver>(1, 60, TimeUnit.SECONDS, new SocketExpirationListener<SocketTransceiver>());
-    //TODO 线程池优化
-    public final static ThreadPoolExecutor executor = new ThreadPoolExecutor(
-            10, 100,
-            60L, TimeUnit.MILLISECONDS,
-            new LinkedBlockingQueue<>());
     //TODO http客户端优化
-    public final static HttpClient httpclient = HttpClients.createDefault();
+//    public final static HttpClient httpclient = HttpClients.createDefault();
+    public final static HttpClient httpclient = new HttpClient();
 
     public TcpServer(int port) {
         this.port = port;
@@ -78,7 +75,7 @@ public class TcpServer {
                     //1、维护roomUserToSocket列表
                     //2、遍历roomUserToSocket列表，当前用户发送100回应消息，当前房间其它用户发送103/1广播消息
                     @Override
-                    public void onUserEnterRoom(SocketTransceiver socket, String rid, String uid, byte[] responseMsg, byte[] routerMsg) {
+                    public void onUserEnterRoom(SocketTransceiver socket, String rid, String uid, byte[] respMsg, byte[] routeMsg) {
                         if (roomUserToSocket.containsKey(rid)) {
                             roomUserToSocket.get(rid).put(uid, socket);
                         } else {
@@ -88,28 +85,49 @@ public class TcpServer {
                         }
                         roomUserToSocket.get(rid).forEach((key, val) -> {
                             if (key.equals(uid)) {
-                                val.send(GlobalConstants.MSG_ID.REPLY, responseMsg);
+                                val.send(GlobalConstants.MSG_ID.REPLY, respMsg);
                             } else {
-                                val.send(GlobalConstants.MSG_ID.BROADCAST, routerMsg);
+                                val.send(GlobalConstants.MSG_ID.BROADCAST, routeMsg);
                             }
                         });
                     }
 
                     //用户离开教室消息回调
                     //1、维护roomUserToSocket列表
-                    //2、遍历roomUserToSocket列表，当前用户发送100回应消息，当前房间其它用户发送103/2广播消息
+                    //2、遍历roomUserToSocket列表，当前房间其它用户发送103/2广播消息
                     @Override
-                    public void onUserLeaveRoom(String proxy, String rid, byte[] msg) {
+                    public void onUserLeaveRoom(SocketTransceiver socket, String rid, String uid, byte[] routeMsg) {
+                        if (roomUserToSocket.containsKey(rid) && roomUserToSocket.get(rid).containsKey(uid)) {
+                            roomUserToSocket.get(rid).remove(uid);
 
+                            if (roomUserToSocket.get(rid).size() == 0) {
+                                roomUserToSocket.remove(rid);
+                            } else {
+                                roomUserToSocket.get(rid).forEach((key, val) -> {
+                                    if (!key.equals(uid)) {
+                                        val.send(GlobalConstants.MSG_ID.BROADCAST, routeMsg);
+                                    }
+                                });
+                            }
+                        }
                     }
 
                     //用户发送聊天消息（包括广播和单播）回调
                     //广播：遍历roomUserToSocket列表，当前用户发送100回应消息，当前房间其它用户发送103/3广播消息
                     //单播：从roomUserToSocket找到对端用户，发送104单播消息
                     @Override
-                    public void onUserChat(boolean isBroadCast) {
+                    public void onUserChat(boolean isBroadCast, SocketTransceiver socket, String rid, String uid, byte[] responseMsg, byte[] routeMsg) {
                         if (isBroadCast) {
                             //TODO 广播
+                            if (roomUserToSocket.containsKey(rid)) {
+                                roomUserToSocket.get(rid).forEach((key, val) -> {
+                                    if (key.equals(uid)) {
+                                        val.send(GlobalConstants.MSG_ID.REPLY, responseMsg);
+                                    } else {
+                                        val.send(GlobalConstants.MSG_ID.BROADCAST, routeMsg);
+                                    }
+                                });
+                            }
                         } else {
                             //TODO 单播
                         }
